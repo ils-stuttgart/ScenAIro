@@ -53,6 +53,6 @@ To get started with the ScenAIro project, follow these steps:
 ## Contributing
 We welcome contributions and feedback. Please fork the repository, create a branch, and submit a pull request with your changes. For any issues or questions, feel free to open an issue on GitHub.
 ## License
-The package is released under [MIT license](https://github.tik.uni-stuttgart.de/ILS/ScenAIro/blob/main/LICENSE).
+The package is released under [MIT license](https://github.com/ils-stuttgart/ScenAIro/blob/main/LICENSE).
 ## Contact
 
