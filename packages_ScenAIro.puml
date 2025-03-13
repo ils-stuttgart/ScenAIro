@@ -1,0 +1,42 @@
+@startuml packages_ScenAIro
+set namespaceSeparator none
+package "scenairo" as scenairo {
+}
+package "scenairo.ScenAIro" as scenairo.ScenAIro {
+}
+package "scenairo.dependencies" as scenairo.dependencies {
+}
+package "scenairo.main" as scenairo.main {
+}
+package "scenairo.presentation" as scenairo.presentation {
+}
+package "scenairo.presentation.ScenAIroUI" as scenairo.presentation.ScenAIroUI {
+}
+package "scenairo.tools" as scenairo.tools {
+}
+package "scenairo.tools.AutomatedRunwayTaggingCopy" as scenairo.tools.AutomatedRunwayTaggingCopy {
+}
+package "scenairo.tools.ConeTransformer" as scenairo.tools.ConeTransformer {
+}
+package "scenairo.tools.CoordSetter" as scenairo.tools.CoordSetter {
+}
+package "scenairo.tools.PointCloudGenerator" as scenairo.tools.PointCloudGenerator {
+}
+package "scenairo.tools.RunwayCalc" as scenairo.tools.RunwayCalc {
+}
+package "scenairo.tools.RunwayCornerAnnotationStruct" as scenairo.tools.RunwayCornerAnnotationStruct {
+}
+package "scenairo.tools.services" as scenairo.tools.services {
+}
+package "scenairo.tools.services.SimFrameScout" as scenairo.tools.services.SimFrameScout {
+}
+scenairo.ScenAIro --> scenairo.presentation.ScenAIroUI
+scenairo.ScenAIro --> scenairo.tools.AutomatedRunwayTaggingCopy
+scenairo.ScenAIro --> scenairo.tools.ConeTransformer
+scenairo.ScenAIro --> scenairo.tools.CoordSetter
+scenairo.ScenAIro --> scenairo.tools.PointCloudGenerator
+scenairo.ScenAIro --> scenairo.tools.RunwayCalc
+scenairo.ScenAIro --> scenairo.tools.RunwayCornerAnnotationStruct
+scenairo.main --> scenairo.ScenAIro
+scenairo.tools.CoordSetter --> scenairo.tools.services.SimFrameScout
+@enduml
