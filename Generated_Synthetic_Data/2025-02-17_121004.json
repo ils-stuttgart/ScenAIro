@@ -1,0 +1,44 @@
+{
+    "images": [
+        {
+            "file_name": "2025-02-17_121004.png",
+            "id": "2025-02-17_121004.png",
+            "width": 3840,
+            "height": 2160
+        }
+    ],
+    "annotations": [
+        {
+            "id": 0,
+            "image_id": "2025-02-17_121004.png",
+            "category_id": 1,
+            "bbox": [
+                1743,
+                1128,
+                127,
+                80
+            ],
+            "segmentation": [
+                [
+                    1852,
+                    1128,
+                    1870,
+                    1128,
+                    1789,
+                    1208,
+                    1743,
+                    1208
+                ]
+            ],
+            "area": 10160,
+            "iscrowd": 0
+        }
+    ],
+    "categories": [
+        {
+            "id": 1,
+            "name": "runway",
+            "supercategory": "infrastructure"
+        }
+    ]
+}
