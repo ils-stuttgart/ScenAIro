@@ -39,6 +39,14 @@ The generated synthetic dataset contains 10000 4k images (for the priliminary wo
 The generated dataset is used to train a Convolutional Neural Network (CNN) model for automatic runway detection. The CNN learns to extract spatial patterns and features from the images, enabling it to differentiate runways from other terrain elements.
 
 ### CNN architecture
+For use case of runway detection, we have use the generated data dor train a Convoluitional Neural Network (CNN). The architechture of the train basline model is the following:
+
+<p align="center">
+     <strong>CNN architecture for Runway detection application/strong><br>
+    <img src="docs/Unbenannt.png" alt="Image 4" width="300"/>
+</p>
+
+
 
 ## Getting Started
 To get started with the ScenAIro project, follow these steps:
