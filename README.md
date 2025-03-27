@@ -42,7 +42,7 @@ The generated dataset is used to train a Convolutional Neural Network (CNN) mode
 For use case of runway detection, we have use the generated data dor train a Convoluitional Neural Network (CNN). The architechture of the train basline model is the following:
 
 <p align="center">
-     <strong>CNN architecture for Runway detection application/strong><br>
+     <strong>CNN architecture for Runway detection application</strong><br>
     <img src="docs/Unbenannt.png" alt="Image 4" width="300"/>
 </p>
 
