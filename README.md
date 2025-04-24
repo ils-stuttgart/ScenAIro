@@ -49,7 +49,7 @@ For the use case of runway detection, we have use the generated data dor train a
 
 
 ## Getting Started
-To get started with the ScenAIro project, follow these steps:
+To get started with the ScenAIro project, follow these steps to get it running:
 
 
 
