@@ -46,6 +46,17 @@ For the use case of runway detection, we have use the generated data dor train a
     <img src="docs/Unbenannt.png" alt="Image 4" width="300"/>
 </p>
 
+## ODD Definition for Runway Detection
+The foundation of scenario generation in ScenAIro is precisely defined by ODDs that delineate the operational boundaries within which the AI model is expected to function. For runway detection, this includes environmental and operational factors relevant to the final approach and landing phases of fixed-wing aircraft.
+
+<p align="center">
+     <strong>ODDs for Runway Detection</strong><br>
+    <img src="table1.png" alt="Table 1" width="800"/>
+    <img src="table2.png" alt="Table 2" width="800"/>
+     <br>
+    <img src="table3.png" alt="Table 3" width="800"/>
+    <img src="table4.png" alt="Table 4" width="800"/>
+</p>
 
 
 ## Getting Started
