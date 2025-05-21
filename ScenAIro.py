@@ -155,8 +155,8 @@ class ScenAIro(tk.Tk):
                 if geo_points is None or len(geo_points) == 0:
                     raise ValueError("Die Transformation der Punkte in Geo-Koordinaten ist fehlgeschlagen.")
 
-                # Screenshot-Pfad
-                screenshot_path = r'C:\Users\MSFS2020_AI\Desktop\Saymon\images\TrainingData\NoRunway_ClearSkies\1800'
+                # Screenshot Save Path
+                screenshot_path = r'Insert Folder Path here'
 
                 # Berechnung der Runway-Eckpunkte
                 corners = self.airport.calculate_runway_corners()
