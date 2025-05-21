@@ -8,7 +8,7 @@ import mss
 import numpy as np
 import gc
 
-class CoordSetter:
+class AircraftPositioningAgent:
     def __init__(self, sim):
         # Create SimConnect link
         self.sm = sim
@@ -22,7 +22,7 @@ class CoordSetter:
         self.event_freeze_lat_long = self.ae.find("FREEZE_LATITUDE_LONGITUDE_TOGGLE")
         self.event_pause = self.ae.find("PAUSE_ON")
 
-    def set_aircraft_values_and_screenshot(self, latitude, longitude, altitude, pitch, heading, roll, screenshot_path, window_width, window_height):
+    def positionAircraftInSimAndTakeScreenshot(self, latitude, longitude, altitude, pitch, heading, roll, screenshot_path, window_width, window_height):
         try:
             heading = np.radians(heading)
             self.aq.set("PLANE_LATITUDE", latitude) #radian
