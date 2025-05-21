@@ -1,7 +1,7 @@
 import math
 import json
 
-class RunwayCalc:
+class RunwayGeometryCalculator:
 
     def __init__(self, name, icao_code, runway_name, runway_width, runway_length, runway_heading,
                  center_lat, center_long, center_alt, start_height, end_height, runway_attributes):
@@ -16,7 +16,7 @@ class RunwayCalc:
         self.end_height = end_height
         self.runway_attributes = runway_attributes
 
-    def calculate_runway_corners(self):
+    def calculateRunwayCorners(self):
         """Berechnet die kartesischen Koordinaten der Landebahn-Eckpunkte."""
         heading_rad = math.radians(self.runway_heading)
         runwayAltitude = self.runway_center["altitude"]
@@ -27,20 +27,20 @@ class RunwayCalc:
         startCornerHeight = runwayAltitude + (start_height - runwayAltitude)
         endCornerHeight = runwayAltitude + (end_height - runwayAltitude)
         corners = {
-            "top_left": (*self.rotate_point(-half_length, half_width, heading_rad), endCornerHeight),
-            "top_right": (*self.rotate_point(-half_length, -half_width, heading_rad), endCornerHeight),
-            "bottom_left": (*self.rotate_point(half_length, half_width, heading_rad), startCornerHeight),
-            "bottom_right": (*self.rotate_point(half_length, -half_width, heading_rad), startCornerHeight),
+            "top_left": (*self.alignCornersWithRunwayHeading(-half_length, half_width, heading_rad), endCornerHeight),
+            "top_right": (*self.alignCornersWithRunwayHeading(-half_length, -half_width, heading_rad), endCornerHeight),
+            "bottom_left": (*self.alignCornersWithRunwayHeading(half_length, half_width, heading_rad), startCornerHeight),
+            "bottom_right": (*self.alignCornersWithRunwayHeading(half_length, -half_width, heading_rad), startCornerHeight),
         }
         return corners
 
-    def rotate_point(self, x, y, angle_rad):
+    def alignCornersWithRunwayHeading(self, x, y, angle_rad):
         """Rotiert einen Punkt um den Ursprung basierend auf dem Heading-Winkel."""
         x_rot = x * math.cos(angle_rad) - y * math.sin(angle_rad)
         y_rot = x * math.sin(angle_rad) + y * math.cos(angle_rad)
         return round(x_rot, 2), round(y_rot, 2)
 
-    def to_dict(self):
+    def createAirport(self):
         return {
             "airport_name": self.name,
             "icao_code": self.icao_code,
@@ -57,7 +57,7 @@ class RunwayCalc:
         }
 
     @classmethod
-    def from_dict(cls, data):
+    def createAirportConfig(cls, data):
         """Erstellt ein Airport-Objekt aus einem Dictionary."""
         print("Creating RunwayCalc from dict")
         runway = data["runway"]
@@ -77,16 +77,16 @@ class RunwayCalc:
             runway_attributes=runway.get("attributes", {})
         )
 
-    def save_to_file(self, filename):
+    def saveAirport(self, filename):
         """Speichert die Flughafendaten in eine JSON-Datei."""
         print(f"Saving RunwayCalc to file: {filename}")
         with open(filename, "w") as file:
-            json.dump(self.to_dict(), file, indent=4)
+            json.dump(self.createAirport(), file, indent=4)
 
     @classmethod
-    def load_from_file(cls, filename):
+    def loadAirport(cls, filename):
         """Lädt ein Flughafen-Objekt aus einer JSON-Datei."""
         print(f"Loading RunwayCalc from file: {filename}")
         with open(filename, "r") as file:
             data = json.load(file)
-        return cls.from_dict(data)
+        return cls.createAirportConfig(data)
