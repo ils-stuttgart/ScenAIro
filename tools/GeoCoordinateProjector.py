@@ -1,7 +1,7 @@
 import numpy as np
 from pyproj import Geod
 
-class ConeTransformer:
+class GeoCoordinateProjector:
     geod = Geod(ellps='WGS84')
 
     @staticmethod
@@ -22,7 +22,7 @@ class ConeTransformer:
         for x, y, z in points:
             distance = np.sqrt(x ** 2 + y ** 2)
             azimuth = np.degrees(heading_rad + np.arctan2(y, x))
-            lon_new, lat_new, back_azimuth = ConeTransformer.geod.fwd(center_lon, center_lat, azimuth, distance)
+            lon_new, lat_new, back_azimuth = GeoCoordinateProjector.geod.fwd(center_lon, center_lat, azimuth, distance)
             alt_new = center_alt + z
             transformed_points.append((lat_new, lon_new, alt_new))
 
