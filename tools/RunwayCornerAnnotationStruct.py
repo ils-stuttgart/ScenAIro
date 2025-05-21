@@ -43,7 +43,7 @@ class RunwayCornerAnnotationStruct:
         self.angles = Angle()
         self.point = Point()
 
-    def calculate_geo_vector(self, airplaneCoord, cornerCoord, runwayHeading, centerHeight):
+    def calculateAirplane2RunwayCornerVector(self, airplaneCoord, cornerCoord, runwayHeading, centerHeight):
         """Berechnet die 2D-Verschiebung zwischen Flugzeugposition und Runway-Ecke mit Rotation."""
 
         # Höhe berechnen (bleibt unverändert)
@@ -80,13 +80,13 @@ class RunwayCornerAnnotationStruct:
 
         return (rotated_coords[0], rotated_coords[1], rotated_coords[2])
 
-    def create_structured_objects(self, point, runway_corners, angles, runwayHeading, centerHeight):
+    def calculateAirplane2RunwayCornerStructure(self, point, runway_corners, angles, runwayHeading, centerHeight):
         objects = []
         
-        A = self.calculate_geo_vector(point, runway_corners["top_left"], runwayHeading, centerHeight)
-        B = self.calculate_geo_vector(point, runway_corners["top_right"], runwayHeading, centerHeight)
-        C = self.calculate_geo_vector(point, runway_corners["bottom_right"], runwayHeading, centerHeight)
-        D = self.calculate_geo_vector(point, runway_corners["bottom_left"], runwayHeading, centerHeight)
+        A = self.calculateAirplane2RunwayCornerVector(point, runway_corners["top_left"], runwayHeading, centerHeight)
+        B = self.calculateAirplane2RunwayCornerVector(point, runway_corners["top_right"], runwayHeading, centerHeight)
+        C = self.calculateAirplane2RunwayCornerVector(point, runway_corners["bottom_right"], runwayHeading, centerHeight)
+        D = self.calculateAirplane2RunwayCornerVector(point, runway_corners["bottom_left"], runwayHeading, centerHeight)
 
         structured_object = StructuredObject(A, B, C, D, angles)
         objects.append(structured_object)
