@@ -58,33 +58,33 @@ class ScenAIroUI(tk.Tk):
         self.right_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
 
         # Eingabefelder im linken Bereich
-        self.airport_entries = self.create_input_section(
+        self.airport_entries = self.__initializeInputSection(
             "Airport Parameters",
             ["Airport Name", "ICAO Code", "Runway Name", "Width", "Length", "Heading", "Latitude", "Longitude",
              "Altitude", "Start Height", "End Height"],
             "#e6f7ff",
             parent=self.left_frame,
-            load_command=self.load_airport,
-            save_command=self.save_airport
+            load_command=self.loadAirport,
+            save_command=self.saveAirport
         )
 
-        self.point_entries = self.create_input_section(
+        self.point_entries = self.__initializeInputSection(
             "Point Generation Parameters",
             ["Apex X", "Apex Y", "Apex Z", "Lateral Angle Left", "Lateral Angle Right",
              "Vertical Min Angle", "Vertical Max Angle", "Maximum Distance", "Number of Points"],
             "#ffede6",
             parent=self.left_frame,
-            load_command=self.load_parameters,
-            save_command=self.save_parameters
+            load_command=self.loadParameters,
+            save_command=self.saveParameters
         )
 
-        self.angle_entries = self.create_input_section(
+        self.angle_entries = self.__initializeInputSection(
             "Angle Parameters (Pitch, Yaw, Bank)",
             ["Pitch Min", "Pitch Max", "Yaw Min", "Yaw Max", "Bank Min", "Bank Max"],
             "#e6ffe6",
             parent=self.left_frame,
-            load_command=self.load_angles,
-            save_command=self.save_angles
+            load_command=self.loadAngles,
+            save_command=self.saveAngles
         )
 
         ## Dummy-Verteilungs-Frame hinzufügen
@@ -113,7 +113,7 @@ class ScenAIroUI(tk.Tk):
         tk.Checkbutton(row2, text="X-Axis", variable=self.apply_x, bg="#f3e6ff").pack(side="left", padx=5)
         tk.Checkbutton(row2, text="Y-Axis", variable=self.apply_y, bg="#f3e6ff").pack(side="left", padx=5)
 
-        update_button = ttk.Button(row2, text="Update Distribution", command=self.plot_dummy_distribution)
+        update_button = ttk.Button(row2, text="Update Distribution", command=self.__plotSamplingPointDistribution)
         update_button.pack(side="right", padx=5)
 
         ## Segmentierungs-Frame hinzufügen
@@ -141,7 +141,7 @@ class ScenAIroUI(tk.Tk):
         tk.Checkbutton(row2, text="X-Axis", variable=self.segment_x, bg="#F5E0D3").pack(side="left", padx=5)
         tk.Checkbutton(row2, text="Y-Axis", variable=self.segment_y, bg="#F5E0D3").pack(side="left", padx=5)
 
-        segmentation_button = ttk.Button(row2, text="Start Segmentation", command=self.start_segmentation)
+        segmentation_button = ttk.Button(row2, text="Start Segmentation", command=self.__startSegmentation)
         segmentation_button.pack(side="right", padx=5)
 
         ## Rechter Haupt-Frame: Oberer und unterer Bereich
@@ -187,12 +187,12 @@ class ScenAIroUI(tk.Tk):
         self.dist_canvas.get_tk_widget().pack(fill="both", expand=True)
 
         # Buttons unter dem Plot (sicherstellen, dass sie sichtbar sind)
-        self.create_buttons(self.right_frame_bottom)
+        self.__setupButtons(self.right_frame_bottom)
 
         # Höhe des Plots anpassen
-        self.adjust_plot_height()
+        self.__setPlotHeight()
 
-    def adjust_plot_height(self):
+    def __setPlotHeight(self):
         """Passt die Höhe des Plots und der neuen Felder rechts an."""
         left_box_height = 650  # Höhe der linken Boxen
 
@@ -201,7 +201,7 @@ class ScenAIroUI(tk.Tk):
         self.plot_description.config(height=10)  # Fixierte Höhe für die Textbeschreibung
         # self.dist_canvas.get_tk_widget().config(height=reduced_plot_height // 2)  # Distribution auf halber Höhe
 
-    def create_input_section(self, title, fields, bg_color, parent, save_command=None, load_command=None):
+    def __initializeInputSection(self, title, fields, bg_color, parent, save_command=None, load_command=None):
         section_frame = tk.LabelFrame(parent, text=title, font=("Helvetica", 12, "bold"), bg=bg_color, fg="#333")
         section_frame.pack(fill="x", padx=5, pady=5)
         section_frame.pack_propagate(False)  # Verhindert Größenanpassung
@@ -229,7 +229,7 @@ class ScenAIroUI(tk.Tk):
 
         return section_entries
 
-    def create_buttons(self, frame):
+    def __setupButtons(self, frame):
         # Gruppe 1: Save/Load Options
         """
         save_load_frame = tk.LabelFrame(frame, text="Save/Load Options", font=("Helvetica", 12, "bold"), bg="#f5f5f5",
@@ -259,9 +259,9 @@ class ScenAIroUI(tk.Tk):
         point_frame = tk.LabelFrame(main_section_frame, text="Point Generation", font=("Helvetica", 12, "bold"),
                                     bg="#f9f3e6", fg="#333")
         point_frame.pack(side="left", expand=True, fill="both", padx=(0, 5), pady=0)
-        ttk.Button(point_frame, text="Generate Points", command=self.parent.generate_and_transform_points).pack(anchor="w",
-                                                                                                         padx=10,
-                                                                                                         pady=5)
+        ttk.Button(point_frame, text="Generate Points", command=self.parent.generateSampleDataset).pack(anchor="w",
+                                                                                                        padx=10,
+                                                                                                        pady=5)
 
         # Senkrechte Trennlinie
         separator_vertical = ttk.Separator(main_section_frame, orient="vertical")
@@ -279,9 +279,9 @@ class ScenAIroUI(tk.Tk):
 
         ttk.Checkbutton(labeling_data_row, text="Enable Labeling", variable=self.labeling_var).pack(side="left",
                                                                                                     padx=(0, 10))
-        ttk.Button(labeling_data_row, text="Create Data", command=self.parent.create_data).pack(side="left")
+        ttk.Button(labeling_data_row, text="Create Data", command=self.parent.generateData).pack(side="left")
 
-    def update_plot(self, points, airport, apex):
+    def __refreshPlot(self, points, airport, apex):
         """Updates the 3D plot and displays the legend in the description text field."""
         self.ax.clear()  # Lösche den aktuellen Plot
         legend_entries = []  # List to hold legend descriptions
@@ -299,7 +299,7 @@ class ScenAIroUI(tk.Tk):
 
         # Plot the runway corners and area
         if airport:
-            corners = airport.calculate_runway_corners()
+            corners = airport.calculateRunwayCorners()
             runway_points = [
                 (corners["top_left"][0], corners["top_left"][1], 0),
                 (corners["top_right"][0], corners["top_right"][1], 0),
@@ -338,9 +338,9 @@ class ScenAIroUI(tk.Tk):
             self.plot_description.insert("end", entry + "\n", "spacing")  # Apply spacing tag
         self.plot_description.config(state="disabled")
 
-        self.plot_dummy_distribution()
+        self.__plotSamplingPointDistribution()
 
-    def plot_cone_boundaries(self):
+    def __plotConeBoundaries(self):
         """
         Plottet die äußeren Grenzen des Kegels entlang der Heading-Richtung.
         """
@@ -357,7 +357,7 @@ class ScenAIroUI(tk.Tk):
         heading_rad = np.radians(self.airport.runway_heading)
 
         # Apex-Position
-        apex = np.array(PointCloudGenerator.transform_apex(self.apex, np.degrees(heading_rad)))
+        apex = np.array(PointCloudGenerator.__transformAimingPoint(self.apex, np.degrees(heading_rad)))
 
         # Liste der Kegelgrenzenpunkte berechnen
         boundary_points = []
@@ -395,7 +395,7 @@ class ScenAIroUI(tk.Tk):
         # Apex plotten
         self.ax.scatter(apex[0], apex[1], apex[2], color='green', s=50, label="Apex")
 
-    def plot_dummy_distribution(self):
+    def __plotSamplingPointDistribution(self):
         """Creates and updates a bar chart based on the selected distribution and axis."""
         distribution = self.distribution_var.get()  # Ausgewählte Verteilung
         apply_x = self.apply_x.get()
@@ -426,7 +426,7 @@ class ScenAIroUI(tk.Tk):
         # Canvas aktualisieren
         self.dist_canvas.draw()
 
-    def start_segmentation(self):
+    def __startSegmentation(self):
         """Dummy function to simulate point cloud segmentation."""
         method = self.segmentation_method.get()
         segment_x = self.segment_x.get()
@@ -438,7 +438,7 @@ class ScenAIroUI(tk.Tk):
                             f"Segment X: {'Yes' if segment_x else 'No'}\n"
                             f"Segment Y: {'Yes' if segment_y else 'No'}")
 
-    def fill_fields(self, entry_fields, values):
+    def __populateEntryFields(self, entry_fields, values):
         """
         # Populates the provided entry fields with corresponding values.
         #
@@ -451,7 +451,7 @@ class ScenAIroUI(tk.Tk):
                 entry_fields[key].delete(0, tk.END)  # Clear the field
                 entry_fields[key].insert(0, str(value))  # Populate new value
 
-    def save_airport(self):
+    def saveAirport(self):
         
         try:
             # Werte aus den Eingabefeldern holen
@@ -487,24 +487,24 @@ class ScenAIroUI(tk.Tk):
             # Dateispeicher-Dialog
             file = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON files", "*.json")])
             if file:
-                self.airport.save_to_file(file)
+                self.airport.saveAirport(file)
                 messagebox.showinfo("Success", f"Airport data saved to: {file}")
         except ValueError as ve:
             messagebox.showerror("Input Error", str(ve))
         except Exception as e:
             messagebox.showerror("Error", f"An unexpected error occurred: {str(e)}")
 
-    def load_airport(self):
+    def loadAirport(self):
         try:
             file = filedialog.askopenfilename(defaultextension=".json", filetypes=[("JSON files", "*.json")])
             if not file:
                 return
 
             # Flughafen-Objekt direkt laden
-            self.airport = RunwayCalc.load_from_file(file)
+            self.airport = RunwayCalc.loadAirport(file)
 
             # Eingabefelder aktualisieren
-            self.fill_fields(self.airport_entries, {
+            self.__populateEntryFields(self.airport_entries, {
                 "Airport Name": self.airport.name,
                 "ICAO Code": self.airport.icao_code,
                 "Runway Name": self.airport.runway_name,
@@ -521,24 +521,24 @@ class ScenAIroUI(tk.Tk):
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load airport: {e}")
 
-    def save_parameters(self):
+    def saveParameters(self):
         params = {key: self.point_entries[key].get() for key in self.point_entries}
         file = JSONManager.save_to_file(params)
         if file:
             messagebox.showinfo("Success", f"Parameters saved to: {file}")
 
-    def load_parameters(self):
+    def loadParameters(self):
         params = JSONManager.load_from_file()
         if params:
-            self.fill_fields(self.point_entries, params)
+            self.__populateEntryFields(self.point_entries, params)
 
-    def save_angles(self):
+    def saveAngles(self):
         angles = {key: self.angle_entries[key].get() for key in self.angle_entries}
         file = JSONManager.save_to_file(angles)
         if file:
             messagebox.showinfo("Success", f"Angles saved to: {file}")
 
-    def load_angles(self):
+    def loadAngles(self):
         angles = JSONManager.load_from_file()
         if angles:
-            self.fill_fields(self.angle_entries, angles)
+            self.__populateEntryFields(self.angle_entries, angles)
