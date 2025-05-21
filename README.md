@@ -51,11 +51,13 @@ The foundation of scenario generation in ScenAIro is precisely defined by ODDs t
 
 <p align="center">
      <strong>ODDs for Runway Detection</strong><br>
-    <img src="table1.png" alt="Table 1" width="800"/>
-    <img src="table2.png" alt="Table 2" width="800"/>
+    <img src="table1.png" alt="Table 1"/>
      <br>
-    <img src="table3.png" alt="Table 3" width="800"/>
-    <img src="table4.png" alt="Table 4" width="800"/>
+    <img src="table2.png" alt="Table 2"/>
+     <br>
+    <img src="table3.png" alt="Table 3"/>
+     <br>
+    <img src="table4.png" alt="Table 4"/>
 </p>
 
 
