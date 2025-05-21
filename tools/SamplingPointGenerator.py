@@ -1,11 +1,11 @@
 import numpy as np
 
-class PointCloudGenerator:
+class SamplingPointGenerator:
     def __init__(self):
         super().__init__()
 
     @staticmethod
-    def transform_apex(apex, heading_rad):
+    def __transformAimingPoint(apex, heading_rad):
         """
         Rotiert den Apex entsprechend dem Heading um die Z-Achse.
         :param apex: Tuple oder Liste (x, y, z) des Apex
@@ -21,8 +21,8 @@ class PointCloudGenerator:
         return apex_transformed
 
     @staticmethod
-    def generate_cone(apex, lateral_angle_left, lateral_angle_right, vertical_min_angle,
-                      vertical_max_angle, max_distance, num_points, heading):
+    def generateCone(apex, lateral_angle_left, lateral_angle_right, vertical_min_angle,
+                     vertical_max_angle, max_distance, num_points, heading):
         """
         Generiert eine Punktwolke, bei der der Kegel entlang der Landebahn-Ausrichtung (Heading) liegt.
         Horizontalwinkel (theta) in der Ebene der Landebahn, Vertikalwinkel (phi) senkrecht zur Landebahn.
@@ -46,7 +46,7 @@ class PointCloudGenerator:
         vertical_max_rad = np.radians(vertical_max_angle)
 
         # Transformiere den Apex
-        apex_transformed = PointCloudGenerator.transform_apex(apex, heading_rad)
+        apex_transformed = SamplingPointGenerator.__transformAimingPoint(apex, heading_rad)
 
         # Rotationsmatrix für die Ausrichtung entlang des Headings
         rotation_matrix = np.array([
