@@ -6,7 +6,7 @@ import numpy as np
 import json
 
 
-class AutomatedRunwayTagging:
+class RunwayTaggingEngine:
     def __init__(self):
         super().__init__()
 
@@ -16,7 +16,7 @@ class AutomatedRunwayTagging:
     # camera- and pixel calculations
     # ---------------------
 
-    def rotate_point(self, vector, pitch, yaw, roll):
+    def rotate3DPoint(self, vector, pitch, yaw, roll):
         pitch_rad = np.radians(pitch)
         yaw_rad = np.radians(yaw)
         roll_rad = np.radians(roll)
@@ -42,7 +42,7 @@ class AutomatedRunwayTagging:
         R = R_yaw @ R_pitch @ R_roll
         return R @ vector
 
-    def calculate_pixel_coordinates(self, point, horizontal_fov, vertical_fov, screen_width, screen_height):
+    def calculatePixelCoordinates(self, point, horizontal_fov, vertical_fov, screen_width, screen_height):
         """
         Berechnet die Pixelkoordinaten eines Punktes im Kamerabild.
         
@@ -93,15 +93,15 @@ class AutomatedRunwayTagging:
     # Visualisation for Testing
     # ---------------------
 
-    def save_annotation(self, screenshot_name, structured_objects, image_width, image_height, horizontal_fov_degrees, vertical_fov_degrees, output_dir):
+    def saveAnnotation(self, screenshot_name, structured_objects, image_width, image_height, horizontal_fov_degrees, vertical_fov_degrees, output_dir):
         os.makedirs(output_dir, exist_ok=True)
         annotations = []
         
         for obj_id, obj in enumerate(structured_objects):
             pixel_coords = []
             for label, point in zip(["A", "B", "C", "D"], [obj.A, obj.B, obj.C, obj.D]):
-                rotated_point = self.rotate_point(point, 0, 0, 0)
-                x_pixel, y_pixel = self.calculate_pixel_coordinates(
+                rotated_point = self.rotate3DPoint(point, 0, 0, 0)
+                x_pixel, y_pixel = self.calculatePixelCoordinates(
                     rotated_point, horizontal_fov_degrees, vertical_fov_degrees, image_width, image_height
                 )
                 pixel_coords.extend([x_pixel, y_pixel])
@@ -143,10 +143,10 @@ class AutomatedRunwayTagging:
         
         print(f"COCO-Annotation gespeichert: {json_filename}")
 
-    def draw_points_on_existing_image(self, image_path, output_path, structured_objects,
-                                horizontal_fov_degrees, vertical_fov_degrees,
-                                screen_width, screen_height,
-                                cam_pitch, cam_yaw, cam_roll):
+    def doOverlayLabelsOnImage(self, image_path, output_path, structured_objects,
+                               horizontal_fov_degrees, vertical_fov_degrees,
+                               screen_width, screen_height,
+                               cam_pitch, cam_yaw, cam_roll):
 
         image = cv2.imread(image_path)
         if image is None:
@@ -159,7 +159,7 @@ class AutomatedRunwayTagging:
             raise ValueError("Keine strukturierten Objekte vorhanden!")
         
         # safe Annotation as JSON
-        self.save_annotation(os.path.basename(image_path), structured_objects, screen_width, screen_height, horizontal_fov_degrees, vertical_fov_degrees, os.path.dirname(output_path))
+        self.saveAnnotation(os.path.basename(image_path), structured_objects, screen_width, screen_height, horizontal_fov_degrees, vertical_fov_degrees, os.path.dirname(output_path))
 
         # Alle Runway-Eckpunkte für jedes StructuredObject zeichnen
     
@@ -168,9 +168,9 @@ class AutomatedRunwayTagging:
 
             for label, point in zip(["A", "B", "C", "D"], [obj.A, obj.B, obj.C, obj.D]):
                 # point, roll, yaw, pitch
-                rotated_point = self.rotate_point(point, 0, 0, 0)
+                rotated_point = self.rotate3DPoint(point, 0, 0, 0)
 
-                (x_pixel, y_pixel) = self.calculate_pixel_coordinates(
+                (x_pixel, y_pixel) = self.calculatePixelCoordinates(
                     rotated_point, horizontal_fov_degrees, vertical_fov_degrees, screen_width, screen_height
                 )
                 x_pixel = int(round(x_pixel))
