@@ -5,57 +5,57 @@ import numpy as np
 from dependencies.SimConnect import *
 
 from .presentation.ScenAIroUI import ScenAIroUI
-from .tools.AutomatedRunwayTaggingCopy import AutomatedRunwayTagging
-from .tools.PointCloudGenerator import PointCloudGenerator
-from .tools.RunwayCalc import RunwayCalc
-from .tools.ConeTransformer import ConeTransformer
-from .tools.CoordSetter import CoordSetter
+from .tools.RunwayTaggingEngine import RunwayTaggingEngine
+from .tools.SamplingPointGenerator import SamplingPointGenerator
+from .tools.RunwayGeometryCalculator import RunwayGeometryCalculator
+from .tools.GeoCoordinateProjector import GeoCoordinateProjector
+from .tools.AircraftPositioningAngent import AircraftPositioningAngent
 from .tools.RunwayCornerAnnotationStruct import RunwayCornerAnnotationStruct
 
 class ScenAIro(tk.Tk):
-    airport = RunwayCalc()
+    airport = RunwayGeometryCalculator()
 
     def __init__(self):
         super().__init__()
-        # Fenster-Einstellungen
+        # Window Settings
         self.title("ScenAIro")
         self.geometry("1400x820")
         self.configure(bg="#f0f4f8")
 
-        # Initialisierung von Attributen
+        # Initialize Attributes
         self.airport = None
         self.points = None
         self.geo_points = None
         self.angles = None
-        self.tagging = AutomatedRunwayTagging()  # Instanz von AutomatedRunwayTagging
-        self.coordsetter = CoordSetter()
+        self.tagging = RunwayTaggingEngine()  # Instanz von AutomatedRunwayTagging
+        self.coordsetter = AircraftPositioningAngent()
         self.runwayCornerAnnotation = RunwayCornerAnnotationStruct()
-        self.pointCloudGeneration = PointCloudGenerator()
-        self.transformCone = ConeTransformer()
+        self.pointCloudGeneration = SamplingPointGenerator()
+        self.transformCone = GeoCoordinateProjector()
 
-        # UI-Elemente erstellen
+        # create UI-element
         self.ui = ScenAIroUI(self)
 
-    def fill_fields(self, entry_fields, values):
+    def populateDefaultParameters(self, entry_fields, values):
         for key, value in values.items():
             entry_fields[key].delete(0, tk.END)
             entry_fields[key].insert(0, value)
 
-    def validate_float(self, value, field_name):
+    def __isFloatValue(self, value, field_name):
         try:
             return float(value)
         except ValueError:
             raise ValueError(f"Invalid value for {field_name}: {value}")
 
-    def validate_int(self, value, field_name):
+    def __isIntValue(self, value, field_name):
         try:
             return int(value)
         except ValueError:
             raise ValueError(f"Invalid value for {field_name}: {value}")
 
-    def generate_and_transform_points(self):
+    def generateSampleDataset(self):
         try:
-            # Eingabewerte aus der GUI abrufen
+            # Get input values from UI
             name = self.ui.airport_entries["Airport Name"].get()
             icao = self.ui.airport_entries["ICAO Code"].get()
             runway_name = self.ui.airport_entries["Runway Name"].get()
@@ -68,29 +68,29 @@ class ScenAIro(tk.Tk):
             start_height = float(self.ui.airport_entries["Start Height"].get())
             end_height = float(self.ui.airport_entries["End Height"].get())
 
-            # Validierung der Eingabedaten
+            # Validate Input Data
             if not all([name, icao, runway_name]):
                 raise ValueError("Die Felder 'Airport Name', 'ICAO Code' und 'Runway Name' dürfen nicht leer sein.")
 
-            # `RunwayCalc`-Objekt erstellen
-            self.airport = RunwayCalc(
+            # create `RunwayCalc`- object
+            self.airport = RunwayGeometryCalculator(
                 name, icao, runway_name, width, length, runwayHeading, latitude, longitude, altitude, start_height, end_height, {}
             )
 
             # Punktgenerierungsparameter auslesen
-            apex_x = self.validate_float(self.ui.point_entries["Apex X"].get(), "Apex X")
-            apex_y = self.validate_float(self.ui.point_entries["Apex Y"].get(), "Apex Y")
-            apex_z = self.validate_float(self.ui.point_entries["Apex Z"].get(), "Apex Z")
+            apex_x = self.__isFloatValue(self.ui.point_entries["Apex X"].get(), "Apex X")
+            apex_y = self.__isFloatValue(self.ui.point_entries["Apex Y"].get(), "Apex Y")
+            apex_z = self.__isFloatValue(self.ui.point_entries["Apex Z"].get(), "Apex Z")
             self.apex = (apex_x, apex_y, apex_z)  # Speichere Apex als Instanzvariable
 
-            self.lateral_angle_left = self.validate_float(self.ui.point_entries["Lateral Angle Left"].get(), "Lateral Angle Left")
-            self.lateral_angle_right = self.validate_float(self.ui.point_entries["Lateral Angle Right"].get(), "Lateral Angle Right")
-            self.vertical_min_angle = self.validate_float(self.ui.point_entries["Vertical Min Angle"].get(), "Vertical Min Angle")
-            self.vertical_max_angle = self.validate_float(self.ui.point_entries["Vertical Max Angle"].get(), "Vertical Max Angle")
-            self.max_distance = self.validate_float(self.ui.point_entries["Maximum Distance"].get(), "Maximum Distance")
-            num_points = self.validate_int(self.ui.point_entries["Number of Points"].get(), "Number of Points") 
+            self.lateral_angle_left = self.__isFloatValue(self.ui.point_entries["Lateral Angle Left"].get(), "Lateral Angle Left")
+            self.lateral_angle_right = self.__isFloatValue(self.ui.point_entries["Lateral Angle Right"].get(), "Lateral Angle Right")
+            self.vertical_min_angle = self.__isFloatValue(self.ui.point_entries["Vertical Min Angle"].get(), "Vertical Min Angle")
+            self.vertical_max_angle = self.__isFloatValue(self.ui.point_entries["Vertical Max Angle"].get(), "Vertical Max Angle")
+            self.max_distance = self.__isFloatValue(self.ui.point_entries["Maximum Distance"].get(), "Maximum Distance")
+            num_points = self.__isIntValue(self.ui.point_entries["Number of Points"].get(), "Number of Points")
 
-            self.points, self.apex_transformed = PointCloudGenerator.generate_cone(
+            self.points, self.apex_transformed = SamplingPointGenerator.generateCone(
                 apex=self.apex,
                 lateral_angle_left=self.lateral_angle_left,
                 lateral_angle_right=self.lateral_angle_right,
@@ -102,7 +102,7 @@ class ScenAIro(tk.Tk):
             )
 
             # Plot aktualisieren
-            self.ui.update_plot(self.points, self.airport, self.apex_transformed)
+            self.ui.__refreshPlot(self.points, self.airport, self.apex_transformed)
 
         except ValueError as ve:
             messagebox.showerror("Error", f"Invalid input: {ve}")
@@ -111,18 +111,18 @@ class ScenAIro(tk.Tk):
 
         return self.points
 
-    def calculate_vertical_fov(self, horizontal_fov_degrees, aspect_ratio):
+    def __calculateVerticalFOV(self, horizontal_fov_degrees, aspect_ratio):
         horizontal_fov_radians = np.radians(horizontal_fov_degrees)
         vertical_fov_radians = 2 * np.arctan(np.tan(horizontal_fov_radians / 2) / aspect_ratio)
         print (f"Vert FOV {np.degrees(vertical_fov_radians)}")
         return np.degrees(vertical_fov_radians)
     
-    def calculate_horizontal_fov(self, vertical_fov_degrees, aspect_ratio):
+    def __calculateHorizontalFOV(self, vertical_fov_degrees, aspect_ratio):
         vertical_fov_radians = np.radians(vertical_fov_degrees)
         horizontal_fov_radians = 2 * np.arctan(np.tan(vertical_fov_radians / 2) * aspect_ratio)
         return np.degrees(horizontal_fov_radians)
 
-    def create_data(self):
+    def generateData(self):
         if self.ui.labeling_var.get():
             try:
                 if hasattr(self, "_creating_data"):  # Schutz gegen Rekursion
@@ -132,7 +132,7 @@ class ScenAIro(tk.Tk):
                 messagebox.showinfo("Create Data", "Creating labeled data...")
 
                 # Punkte in Geo-Koordinaten generieren und transformieren
-                generated_points = self.generate_and_transform_points()
+                generated_points = self.generateSampleDataset()
                 if generated_points is None or len(generated_points) == 0:
                     raise ValueError("Keine generierten Punkte verfügbar. Bitte Eingabewerte überprüfen.")
 
@@ -144,7 +144,7 @@ class ScenAIro(tk.Tk):
 
                 # Transformiere Punkte in Geo-Koordinaten
                 # Heading Wert entfernen, da dieser nicht benötigt wird
-                geo_points = ConeTransformer.transform_points(
+                geo_points = GeoCoordinateProjector.transform_points(
                     points=generated_points,
                     center_lat=center_lat,
                     center_lon=center_lon,
@@ -159,11 +159,11 @@ class ScenAIro(tk.Tk):
                 screenshot_path = r'Insert Folder Path here'
 
                 # Berechnung der Runway-Eckpunkte
-                corners = self.airport.calculate_runway_corners()
+                corners = self.airport.calculateRunwayCorners()
 
                 # Start SimConnect
                 sim = SimConnect()
-                coord_setter = CoordSetter(sim)
+                coord_setter = AircraftPositioningAngent(sim)
 
                 # Punkte verarbeiten und markieren
                 for i, (geo_point, generated_point) in enumerate(zip(geo_points[1:], generated_points)):
@@ -176,19 +176,19 @@ class ScenAIro(tk.Tk):
                     screen_height = 2160
                     aspectRatio = screen_width / screen_height
                     runwayHeading = self.airport.runway_heading
-                    horizontal_fov_degrees = self.calculate_horizontal_fov(vertical_fov_degrees, aspectRatio)
+                    horizontal_fov_degrees = self.__calculateHorizontalFOV(vertical_fov_degrees, aspectRatio)
 
 
-                    screenshot_name = coord_setter.set_aircraft_values_and_screenshot(
+                    screenshot_name = coord_setter.positionAircraftInSimAndTakeScreenshot(
                         latitude, longitude, altitude, pitch, (runwayHeading-180), roll, screenshot_path, screen_width, screen_height
                     )
     	            
 
                     runway_annotation = RunwayCornerAnnotationStruct()
-                    structured_objects = runway_annotation.create_structured_objects(generated_point, corners, (0, 0, 0), runwayHeading, center_alt)
+                    structured_objects = runway_annotation.calculateAirplane2RunwayCornerStructure(generated_point, corners, (0, 0, 0), runwayHeading, center_alt)
 
                     # Alle Rechtecke auf jedes Bild zeichnen
-                    self.tagging.draw_points_on_existing_image(
+                    self.tagging.doOverlayLabelsOnImage(
                         image_path=f"{screenshot_path}\\{screenshot_name}.png",
                         output_path=f"{screenshot_path}\\tagged_{screenshot_name}.png",
                         structured_objects=structured_objects,
