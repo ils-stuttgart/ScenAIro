@@ -1,0 +1,18 @@
+{
+    "airport_name": "Flesland, Bergen",
+    "icao_code": "ENBR",
+    "runway": {
+        "name": "35",
+        "width": 45.0,
+        "length": 2981.0,
+        "heading": 350.534576,
+        "center_coordinates": {
+            "latitude": 60.293437,
+            "longitude": 5.218154,
+            "altitude": 47.701004
+        },
+    "start_height": 47.701004,
+    "end_height": 52.701004,
+    "attributes": {}
+	}
+}

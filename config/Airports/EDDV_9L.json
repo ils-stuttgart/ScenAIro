@@ -1,0 +1,18 @@
+{
+    "airport_name": "HHannover",
+    "icao_code": "EDDV",
+    "runway": {
+        "name": "9L",
+        "width": 45.0,
+        "length": 3198.0,
+        "heading": 92.56987,
+        "center_coordinates": {
+            "latitude": 52.467599,
+            "longitude": 9.676213,
+            "altitude": 52.781002
+        },
+		"start_height": 52.781002,
+		"end_height": 51.781002,
+		"attributes": {}
+    }	
+}

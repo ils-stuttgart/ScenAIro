@@ -1,0 +1,18 @@
+{
+    "airport_name": "Luxembourg",
+    "icao_code": "ELLX",
+    "runway": {
+        "name": "24",
+        "width": 45.0,
+        "length": 3998.0,
+        "heading": 60.199310,
+        "center_coordinates": {
+            "latitude": 49.626451,
+            "longitude": 6.211552,
+            "altitude": 361.492004
+        },
+    "start_height": 367.8936,
+    "end_height": 354.1776
+	},
+    "attributes": {}
+}

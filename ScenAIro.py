@@ -4,16 +4,17 @@ import numpy as np
 
 from dependencies.SimConnect import *
 
-from .presentation.ScenAIroUI import ScenAIroUI
-from .tools.RunwayTaggingEngine import RunwayTaggingEngine
-from .tools.SamplingPointGenerator import SamplingPointGenerator
-from .tools.RunwayGeometryCalculator import RunwayGeometryCalculator
-from .tools.GeoCoordinateProjector import GeoCoordinateProjector
-from .tools.AircraftPositioningAngent import AircraftPositioningAngent
-from .tools.RunwayCornerAnnotationStruct import RunwayCornerAnnotationStruct
+from presentation.ScenAIroUI import ScenAIroUI
+from tools.RunwayTaggingEngine import RunwayTaggingEngine
+from tools.SamplingPointGenerator import SamplingPointGenerator
+from tools.RunwayGeometryCalculator import RunwayGeometryCalculator
+from tools.GeoCoordinateProjector import GeoCoordinateProjector
+from tools.AircraftPositioningAgent import AircraftPositioningAgent
+from tools.RunwayCornerAnnotationStruct import RunwayCornerAnnotationStruct
 
 class ScenAIro(tk.Tk):
-    airport = RunwayGeometryCalculator()
+    
+    #airport = RunwayGeometryCalculator()
 
     def __init__(self):
         super().__init__()
@@ -23,15 +24,18 @@ class ScenAIro(tk.Tk):
         self.configure(bg="#f0f4f8")
 
         # Initialize Attributes
+        sim = SimConnect()
+
         self.airport = None
         self.points = None
         self.geo_points = None
         self.angles = None
-        self.tagging = RunwayTaggingEngine()  # Instanz von AutomatedRunwayTagging
-        self.coordsetter = AircraftPositioningAngent()
+        self.tagging = RunwayTaggingEngine()  
+        self.coordsetter = AircraftPositioningAgent(sim) 
         self.runwayCornerAnnotation = RunwayCornerAnnotationStruct()
         self.pointCloudGeneration = SamplingPointGenerator()
         self.transformCone = GeoCoordinateProjector()
+
 
         # create UI-element
         self.ui = ScenAIroUI(self)
@@ -68,14 +72,17 @@ class ScenAIro(tk.Tk):
             start_height = float(self.ui.airport_entries["Start Height"].get())
             end_height = float(self.ui.airport_entries["End Height"].get())
 
+
             # Validate Input Data
             if not all([name, icao, runway_name]):
                 raise ValueError("Die Felder 'Airport Name', 'ICAO Code' und 'Runway Name' dürfen nicht leer sein.")
+
 
             # create `RunwayCalc`- object
             self.airport = RunwayGeometryCalculator(
                 name, icao, runway_name, width, length, runwayHeading, latitude, longitude, altitude, start_height, end_height, {}
             )
+
 
             # Punktgenerierungsparameter auslesen
             apex_x = self.__isFloatValue(self.ui.point_entries["Apex X"].get(), "Apex X")
@@ -83,12 +90,14 @@ class ScenAIro(tk.Tk):
             apex_z = self.__isFloatValue(self.ui.point_entries["Apex Z"].get(), "Apex Z")
             self.apex = (apex_x, apex_y, apex_z)  # Speichere Apex als Instanzvariable
 
+
             self.lateral_angle_left = self.__isFloatValue(self.ui.point_entries["Lateral Angle Left"].get(), "Lateral Angle Left")
             self.lateral_angle_right = self.__isFloatValue(self.ui.point_entries["Lateral Angle Right"].get(), "Lateral Angle Right")
             self.vertical_min_angle = self.__isFloatValue(self.ui.point_entries["Vertical Min Angle"].get(), "Vertical Min Angle")
             self.vertical_max_angle = self.__isFloatValue(self.ui.point_entries["Vertical Max Angle"].get(), "Vertical Max Angle")
             self.max_distance = self.__isFloatValue(self.ui.point_entries["Maximum Distance"].get(), "Maximum Distance")
             num_points = self.__isIntValue(self.ui.point_entries["Number of Points"].get(), "Number of Points")
+
 
             self.points, self.apex_transformed = SamplingPointGenerator.generateCone(
                 apex=self.apex,
@@ -101,13 +110,15 @@ class ScenAIro(tk.Tk):
                 heading=self.airport.runway_heading
             )
 
+
             # Plot aktualisieren
-            self.ui.__refreshPlot(self.points, self.airport, self.apex_transformed)
+            self.ui.refreshPlot(self.points, self.airport, self.apex_transformed)
+
 
         except ValueError as ve:
             messagebox.showerror("Error", f"Invalid input: {ve}")
         except Exception as e:
-            messagebox.showerror("Error", f"An unexpected error occurred: {e}")
+            messagebox.showerror("Error", f"A really unexpected error occurred: {e}")
 
         return self.points
 
@@ -156,14 +167,15 @@ class ScenAIro(tk.Tk):
                     raise ValueError("Die Transformation der Punkte in Geo-Koordinaten ist fehlgeschlagen.")
 
                 # Screenshot Save Path
-                screenshot_path = r'Insert Folder Path here'
+                #screenshot_path = r'Insert Folder Path here'
+                screenshot_path = r'C:\Users\mfs2024\Desktop\Saymon\Images_forTesting'
 
                 # Berechnung der Runway-Eckpunkte
                 corners = self.airport.calculateRunwayCorners()
 
                 # Start SimConnect
                 sim = SimConnect()
-                coord_setter = AircraftPositioningAngent(sim)
+                coord_setter = AircraftPositioningAgent(sim)
 
                 # Punkte verarbeiten und markieren
                 for i, (geo_point, generated_point) in enumerate(zip(geo_points[1:], generated_points)):
@@ -172,8 +184,8 @@ class ScenAIro(tk.Tk):
                     pitch = 0.0
                     roll = 0.0
                     vertical_fov_degrees = np.degrees(1.028) 
-                    screen_width = 3840
-                    screen_height = 2160
+                    screen_width = 2560
+                    screen_height = 1440
                     aspectRatio = screen_width / screen_height
                     runwayHeading = self.airport.runway_heading
                     horizontal_fov_degrees = self.__calculateHorizontalFOV(vertical_fov_degrees, aspectRatio)
@@ -205,7 +217,7 @@ class ScenAIro(tk.Tk):
                 messagebox.showinfo("Success", "Daten und Screenshots erfolgreich erstellt.")
                 return None
             except Exception as e:
-                messagebox.showerror("Error", f"Ein Fehler ist aufgetreten: {e}")
+                messagebox.showerror("Error", f"Ein wirklicher Fehler ist aufgetreten: {e}")
         else:
             messagebox.showinfo("Create Data", "Daten werden ohne Labeling erstellt...")
         

@@ -1,6 +1,6 @@
 import pygetwindow
 from PIL import Image
-from .dependencies.SimConnect import *
+from dependencies.SimConnect import *
 from .services.SimFrameScout import SimFrameScout
 from datetime import datetime
 import time

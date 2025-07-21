@@ -1,6 +1,6 @@
 import numpy as np
 import math
-import ressources.constants as const
+#import ressources.constants as const
 
 class Point:
     def __init__(self, x: float, y: float, z: float = 0.0):
@@ -39,9 +39,11 @@ class StructuredObject:
 
 class RunwayCornerAnnotationStruct:
     def __init__(self):
-        self.structuredObjects = StructuredObject()
-        self.angles = Angle()
-        self.point = Point()
+        zero_point = (0.0, 0.0, 0.0)
+        dummy_angle = Angle(0.0, 0.0, 0.0)
+        self.structuredObjects = StructuredObject(zero_point, zero_point, zero_point, zero_point, dummy_angle)
+        self.angles = dummy_angle
+        self.point = Point(0.0, 0.0, 0.0)
 
     def calculateAirplane2RunwayCornerVector(self, airplaneCoord, cornerCoord, runwayHeading, centerHeight):
         """Berechnet die 2D-Verschiebung zwischen Flugzeugposition und Runway-Ecke mit Rotation."""

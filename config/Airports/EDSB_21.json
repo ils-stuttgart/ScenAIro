@@ -1,0 +1,18 @@
+{
+    "airport_name": "Karlsruhe / Baden-Baden",
+    "icao_code": "EDSB",
+    "runway": {
+        "name": "21",
+        "width": 45.0,
+        "length": 2998.0,
+        "heading": 211.724258,
+        "center_coordinates": {
+            "latitude": 48.779356,
+            "longitude": 8.080506,
+            "altitude": 123.596008
+        },
+    "start_height": 123.596008,
+    "end_height": 123.596008
+	},
+    "attributes": {}
+}

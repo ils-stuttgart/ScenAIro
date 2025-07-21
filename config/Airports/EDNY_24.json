@@ -1,0 +1,18 @@
+{
+    "airport_name": "Friedrichshafen",
+    "icao_code": "EDNY",
+    "runway": {
+        "name": "24",
+        "width": 45.0,
+        "length": 2352.0,
+        "heading": 60.119431,
+        "center_coordinates": {
+            "latitude": 47.671325,
+            "longitude": 9.511504,
+            "altitude": 411.937012
+        },
+    "start_height": 411.937012,
+    "end_height": 411.937012
+	},
+    "attributes": {}
+}

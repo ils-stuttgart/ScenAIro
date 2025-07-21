@@ -3,8 +3,8 @@ import json
 
 class RunwayGeometryCalculator:
 
-    def __init__(self, name, icao_code, runway_name, runway_width, runway_length, runway_heading,
-                 center_lat, center_long, center_alt, start_height, end_height, runway_attributes):
+    def __init__(self, name, icao_code, runway_name, runway_width, runway_length, runway_heading, 
+                 center_lat, center_long, center_alt, start_height, end_height, runway_attributes):    
         self.name = name
         self.icao_code = icao_code
         self.runway_name = runway_name

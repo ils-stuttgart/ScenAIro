@@ -1,0 +1,18 @@
+{
+    "airport_name": "Los Angeles International Airport",
+    "icao_code": "KLAX",
+    "runway": {
+        "name": "R25",
+        "width": 46.0,
+        "length": 3939.0,
+        "heading": 82.960899,
+        "center_coordinates": {
+            "latitude": 33.937723,
+            "longitude": -118.400929,
+            "altitude": 34.022
+        },
+    "start_height": 34.022,
+    "end_height": 34.022
+	},
+    "attributes": {}
+}

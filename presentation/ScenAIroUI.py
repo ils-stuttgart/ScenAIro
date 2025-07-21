@@ -6,8 +6,8 @@ import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
-from .tools import PointCloudGenerator, ConeTransformer, CoordSetter
-from .tools.RunwayCalc import RunwayCalc
+from tools import SamplingPointGenerator, AircraftPositioningAgent
+from tools.RunwayGeometryCalculator import RunwayGeometryCalculator
 
 class JSONManager:
     @staticmethod
@@ -37,9 +37,10 @@ class JSONManager:
             return None
 
 
-class ScenAIroUI(tk.Tk):
+class ScenAIroUI(tk.Frame):
 
     def __init__(self, parent):
+        super().__init__(parent)
         self.airport = None
         self.parent = parent
         self.jsonmanager = JSONManager()
@@ -281,7 +282,7 @@ class ScenAIroUI(tk.Tk):
                                                                                                     padx=(0, 10))
         ttk.Button(labeling_data_row, text="Create Data", command=self.parent.generateData).pack(side="left")
 
-    def __refreshPlot(self, points, airport, apex):
+    def refreshPlot(self, points, airport, apex):
         """Updates the 3D plot and displays the legend in the description text field."""
         self.ax.clear()  # Lösche den aktuellen Plot
         legend_entries = []  # List to hold legend descriptions
@@ -357,7 +358,7 @@ class ScenAIroUI(tk.Tk):
         heading_rad = np.radians(self.airport.runway_heading)
 
         # Apex-Position
-        apex = np.array(PointCloudGenerator.__transformAimingPoint(self.apex, np.degrees(heading_rad)))
+        apex = np.array(SamplingPointGenerator.__transformAimingPoint(self.apex, np.degrees(heading_rad)))
 
         # Liste der Kegelgrenzenpunkte berechnen
         boundary_points = []
@@ -441,6 +442,7 @@ class ScenAIroUI(tk.Tk):
     def __populateEntryFields(self, entry_fields, values):
         """
         # Populates the provided entry fields with corresponding values.
+        # 
         #
         # Args:
         #    entry_fields (dict): Dictionary mapping field names to their entry widgets.
@@ -482,7 +484,7 @@ class ScenAIroUI(tk.Tk):
             end_height = float(end_height)
 
             # Flughafen-Objekt erstellen
-            self.airport = RunwayCalc(name, icao, runway_name, width, length, heading, lat, lon, alt, start_height, end_height, {})
+            self.airport = RunwayGeometryCalculator(name, icao, runway_name, width, length, heading, lat, lon, alt, start_height, end_height, {})
 
             # Dateispeicher-Dialog
             file = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON files", "*.json")])
@@ -501,7 +503,7 @@ class ScenAIroUI(tk.Tk):
                 return
 
             # Flughafen-Objekt direkt laden
-            self.airport = RunwayCalc.loadAirport(file)
+            self.airport = RunwayGeometryCalculator.loadAirport(file)
 
             # Eingabefelder aktualisieren
             self.__populateEntryFields(self.airport_entries, {
