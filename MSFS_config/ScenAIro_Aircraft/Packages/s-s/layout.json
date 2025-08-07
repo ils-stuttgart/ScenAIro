@@ -1,0 +1,94 @@
+{
+  "content": [
+    {
+      "path": "contentinfo/s-s/thumbnail.jpg",
+      "size": 5446,
+      "date": 133953224090000000
+    },
+    {
+      "path": "simobjects/airplanes/scenairo/ai.cfg",
+      "size": 752,
+      "date": 133990296760000000
+    },
+    {
+      "path": "simobjects/airplanes/scenairo/aircraft.cfg",
+      "size": 3013,
+      "date": 133990296760000000
+    },
+    {
+      "path": "simobjects/airplanes/scenairo/cameras.cfg",
+      "size": 21368,
+      "date": 133990296760000000
+    },
+    {
+      "path": "simobjects/airplanes/scenairo/cockpit.cfg",
+      "size": 4860,
+      "date": 133990296760000000
+    },
+    {
+      "path": "simobjects/airplanes/scenairo/engines.cfg",
+      "size": 8307,
+      "date": 133990296760000000
+    },
+    {
+      "path": "simobjects/airplanes/scenairo/flight_model.cfg",
+      "size": 18349,
+      "date": 133990296760000000
+    },
+    {
+      "path": "simobjects/airplanes/scenairo/gameplay.cfg",
+      "size": 1322,
+      "date": 133990296760000000
+    },
+    {
+      "path": "simobjects/airplanes/scenairo/model/basicaircraft.bin",
+      "size": 36012,
+      "date": 133990294560262162
+    },
+    {
+      "path": "simobjects/airplanes/scenairo/model/basicaircraft.gltf",
+      "size": 10403,
+      "date": 133990294560262162
+    },
+    {
+      "path": "simobjects/airplanes/scenairo/model/basicaircraft.xml",
+      "size": 194,
+      "date": 133990294560000003
+    },
+    {
+      "path": "simobjects/airplanes/scenairo/model/model.cfg",
+      "size": 36,
+      "date": 133990296760000000
+    },
+    {
+      "path": "simobjects/airplanes/scenairo/panel/panel.cfg",
+      "size": 20,
+      "date": 133990294560000000
+    },
+    {
+      "path": "simobjects/airplanes/scenairo/sound/sound.xml",
+      "size": 163,
+      "date": 133990294560000000
+    },
+    {
+      "path": "simobjects/airplanes/scenairo/soundai/soundai.xml",
+      "size": 179,
+      "date": 133990294560000000
+    },
+    {
+      "path": "simobjects/airplanes/scenairo/systems.cfg",
+      "size": 15215,
+      "date": 133990296760000000
+    },
+    {
+      "path": "simobjects/airplanes/scenairo/texture/thumbnail.jpg",
+      "size": 21580,
+      "date": 133990294560000000
+    },
+    {
+      "path": "simobjects/airplanes/scenairo/texture/thumbnail_small.jpg",
+      "size": 4488,
+      "date": 133990294560000000
+    }
+  ]
+}

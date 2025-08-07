@@ -1,0 +1,18 @@
+{
+    "airport_name": "Stuttgart",
+    "icao_code": "EDDS",
+    "runway": {
+        "name": "25",
+        "width": 45.0,
+        "length": 3045.0,
+        "heading": 74.025597,
+        "center_coordinates": {
+            "latitude": 48.690248,
+            "longitude": 9.223924,
+            "altitude": 384.21701
+        },
+        "start_height": 388.9248,
+        "end_height": 388.949184,
+        "attributes": {}
+    }
+}

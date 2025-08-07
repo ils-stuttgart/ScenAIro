@@ -1,0 +1,201 @@
+<RPTInputs>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\test3\PackageSources\SimObjects\Airplanes\ScenAIro\model\BasicAircraft.gltf">
+		<Package Name="s-s">
+			<AssetGroup Name="Aircraft"/>
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\test3\PackageSources\SimObjects\Airplanes\ScenAIro\cockpit.cfg">
+		<Package Name="s-s">
+			<AssetGroup Name="Aircraft"/>
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\test3\PackageSources\SimObjects\Airplanes\ScenAIro\model\model.CFG">
+		<Package Name="s-s">
+			<AssetGroup Name="Aircraft"/>
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\test3\PackageSources\SimObjects\Airplanes\ScenAIro\sound\sound.xml">
+		<Package Name="s-s">
+			<AssetGroup Name="Aircraft"/>
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\Test1\PackageSources\SimObjects\Airplanes\ScenAIro\sound\sound.xml">
+		<Package Name="s-scenairoconfig">
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\Test1\PackageSources\SimObjects\Airplanes\ScenAIro\model\model.CFG">
+		<Package Name="s-scenairoconfig">
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\test3\PackageSources\SimObjects\Airplanes\ScenAIro\model\BasicAircraft.xml">
+		<Package Name="s-s">
+			<AssetGroup Name="Aircraft"/>
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\Test1\PackageSources\SimObjects\Airplanes\ScenAIro\engines.cfg">
+		<Package Name="s-scenairoconfig">
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\Test1\PackageSources\SimObjects\Airplanes\ScenAIro\model\BasicAircraft.gltf">
+		<Package Name="s-scenairoconfig">
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\test3\PackageSources\SimObjects\Airplanes\ScenAIro\soundai\soundai.xml">
+		<Package Name="s-s">
+			<AssetGroup Name="Aircraft"/>
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\test3\PackageSources\SimObjects\Airplanes\ScenAIro\panel\panel.cfg">
+		<Package Name="s-s">
+			<AssetGroup Name="Aircraft"/>
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\Test1\PackageSources\SimObjects\Airplanes\ScenAIro\texture\thumbnail_small.jpg">
+		<Package Name="s-scenairoconfig">
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\test3\PackageSources\SimObjects\Airplanes\ScenAIro\cameras.cfg">
+		<Package Name="s-s">
+			<AssetGroup Name="Aircraft"/>
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\test3\PackageSources\SimObjects\Airplanes\ScenAIro\systems.cfg">
+		<Package Name="s-s">
+			<AssetGroup Name="Aircraft"/>
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\Test1\PackageSources\SimObjects\Airplanes\ScenAIro\panel\panel.cfg">
+		<Package Name="s-scenairoconfig">
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\Test1\PackageSources\SimObjects\Airplanes\ScenAIro\flight_model.cfg">
+		<Package Name="s-scenairoconfig">
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\test3\PackageSources\SimObjects\Airplanes\ScenAIro\model\BasicAircraft.bin">
+		<Package Name="s-s">
+			<AssetGroup Name="Aircraft"/>
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\Test1\PackageDefinitions\s-scenairoconfig\ContentInfo\Thumbnail.jpg">
+		<Package Name="s-scenairoconfig">
+			<AssetGroup Name="ContentInfo"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\Test1\PackageSources\SimObjects\Airplanes\ScenAIro\gameplay.cfg">
+		<Package Name="s-scenairoconfig">
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\test3\PackageSources\SimObjects\Airplanes\ScenAIro\engines.cfg">
+		<Package Name="s-s">
+			<AssetGroup Name="Aircraft"/>
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\test3\PackageDefinitions\s-s\ContentInfo\Thumbnail.jpg">
+		<Package Name="s-s">
+			<AssetGroup Name="ContentInfo"/>
+			<AssetGroup Name="ContentInfo"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\Test1\PackageSources\SimObjects\Airplanes\ScenAIro\model\BasicAircraft.xml">
+		<Package Name="s-scenairoconfig">
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\Test1\PackageSources\SimObjects\Airplanes\ScenAIro\texture\thumbnail.jpg">
+		<Package Name="s-scenairoconfig">
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\test3\PackageSources\SimObjects\Airplanes\ScenAIro\texture\thumbnail_small.jpg">
+		<Package Name="s-s">
+			<AssetGroup Name="Aircraft"/>
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\test3\PackageSources\SimObjects\Airplanes\ScenAIro\gameplay.cfg">
+		<Package Name="s-s">
+			<AssetGroup Name="Aircraft"/>
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\Test1\PackageSources\SimObjects\Airplanes\ScenAIro\soundai\soundai.xml">
+		<Package Name="s-scenairoconfig">
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\test3\PackageSources\SimObjects\Airplanes\ScenAIro\texture\thumbnail.jpg">
+		<Package Name="s-s">
+			<AssetGroup Name="Aircraft"/>
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\Test1\PackageSources\SimObjects\Airplanes\ScenAIro\cockpit.cfg">
+		<Package Name="s-scenairoconfig">
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\test3\PackageSources\SimObjects\Airplanes\ScenAIro\flight_model.cfg">
+		<Package Name="s-s">
+			<AssetGroup Name="Aircraft"/>
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\Test1\PackageSources\SimObjects\Airplanes\ScenAIro\model\BasicAircraft.bin">
+		<Package Name="s-scenairoconfig">
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\test3\PackageSources\SimObjects\Airplanes\ScenAIro\ai.cfg">
+		<Package Name="s-s">
+			<AssetGroup Name="Aircraft"/>
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\Test1\PackageSources\SimObjects\Airplanes\ScenAIro\ai.cfg">
+		<Package Name="s-scenairoconfig">
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\Test1\PackageSources\SimObjects\Airplanes\ScenAIro\aircraft.cfg">
+		<Package Name="s-scenairoconfig">
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\Test1\PackageSources\SimObjects\Airplanes\ScenAIro\systems.cfg">
+		<Package Name="s-scenairoconfig">
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\Test1\PackageSources\SimObjects\Airplanes\ScenAIro\cameras.cfg">
+		<Package Name="s-scenairoconfig">
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+	<RPTInput Path="C:\Users\mfs2024\Documents\MyFSProjects\test3\PackageSources\SimObjects\Airplanes\ScenAIro\aircraft.cfg">
+		<Package Name="s-s">
+			<AssetGroup Name="Aircraft"/>
+			<AssetGroup Name="Aircraft"/>
+		</Package>
+	</RPTInput>
+</RPTInputs>
+
