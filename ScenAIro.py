@@ -167,8 +167,7 @@ class ScenAIro(tk.Tk):
                     raise ValueError("Die Transformation der Punkte in Geo-Koordinaten ist fehlgeschlagen.")
 
                 # Screenshot Save Path
-                #screenshot_path = r'Insert Folder Path here'
-                screenshot_path = r'C:\Users\mfs2024\Desktop\Saymon\Images_forTesting'
+                screenshot_path = r'Insert Folder Path here'
 
                 # Berechnung der Runway-Eckpunkte
                 corners = self.airport.calculateRunwayCorners()
@@ -221,3 +220,4 @@ class ScenAIro(tk.Tk):
         else:
             messagebox.showinfo("Create Data", "Daten werden ohne Labeling erstellt...")
         
+
