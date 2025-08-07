@@ -57,6 +57,22 @@ The foundation of scenario generation in ScenAIro is precisely defined by ODDs t
 
 ## Getting Started
 To get started with the ScenAIro project, follow these steps to get it running:
+### Configure the Flight Sim 
+To ensure correct labelling, an specific aircraft model must be used: (Current aircraft model working with MSFS24)
+
+How to add the ScenAIro Aircraft model to the MSFS2024 sim:
+1. Activate developer mode in the advanced Settings of the MSFS
+2. Go to file and add Project: "ScenAIro_Aircraft"
+3. Select the ScenAIro airplane from the Aicraft Selection
+4. Start flight
+
+Start ScenAIro:
+0. Set window dimension settings and file path for generated images in the ScenAIro.py file
+1. Compile main.py to start ScenAIro
+2. Choose Runway File from the config folder or add new airport
+3. Choose angle config files
+4. generate Data
+5. Start data creation
 
 
 
