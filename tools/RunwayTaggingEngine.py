@@ -158,7 +158,7 @@ class RunwayTaggingEngine:
         if not structured_objects:
             raise ValueError("Keine strukturierten Objekte vorhanden!")
         
-        # safe Annotation as JSON
+        # safe Annotation as JSON #todo add input metadata here
         self.saveAnnotation(os.path.basename(image_path), structured_objects, screen_width, screen_height, horizontal_fov_degrees, vertical_fov_degrees, os.path.dirname(output_path))
 
         # Alle Runway-Eckpunkte für jedes StructuredObject zeichnen
