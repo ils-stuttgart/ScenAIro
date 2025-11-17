@@ -45,20 +45,20 @@ class ScenAIroUI(tk.Frame):
         self.parent = parent
         self.jsonmanager = JSONManager()
 
-        # Lade das Icon
+        # Load Icon
 
 
-        # Haupt-Frames: Links (1/3) und Rechts (2/3)
+        # main-Frames: left (1/3) and right (2/3)
         main_frame = tk.Frame(self.parent, bg="#f0f4f8")
         main_frame.pack(fill="both", expand=True)
 
-        self.left_frame = tk.Frame(main_frame, bg="#f0f4f8", width=400)
-        self.left_frame.pack(side="left", fill="y", padx=10, pady=10)
+        self.left_frame = tk.Frame(main_frame, bg="#f0f4f8", width=500)
+        self.left_frame.pack(side="left", fill="y", padx=5, pady=5)
 
         self.right_frame = tk.Frame(main_frame, bg="#f0f4f8")
-        self.right_frame.pack(side="right", fill="both", expand=True, padx=10, pady=10)
+        self.right_frame.pack(side="right", fill="both", expand=True, padx=5, pady=5)
 
-        # Eingabefelder im linken Bereich
+        # Input fields left frame:
         self.airport_entries = self.__initializeInputSection(
             "Airport Parameters",
             ["Airport Name", "ICAO Code", "Runway Name", "Width", "Length", "Heading", "Latitude", "Longitude",
@@ -88,18 +88,27 @@ class ScenAIroUI(tk.Frame):
             save_command=self.saveAngles
         )
 
-        ## Dummy-Verteilungs-Frame hinzufügen
+        self.time_entries = self.__initializeInputSection(
+            "Time of Day",
+            ["Hours", "Minutes"],
+            "#FFEDE0",
+            parent=self.left_frame,
+            #load_command=self.loadTime,
+            #save_command=self.saveTime
+        )
+
+        ## Distribution-Frame
         self.dummy_frame = tk.LabelFrame(self.left_frame, text="Distribution Settings",
                                          font=("Helvetica", 12, "bold"), bg="#f3e6ff", fg="#333")
         self.dummy_frame.pack(fill="x", padx=5, pady=10)
 
-        # Unterteilung in zwei Zeilen
+        # Division in 2 lines
         row1 = tk.Frame(self.dummy_frame, bg="#f3e6ff")
         row1.pack(fill="x", padx=5, pady=2)
         row2 = tk.Frame(self.dummy_frame, bg="#f3e6ff")
         row2.pack(fill="x", padx=5, pady=2)
 
-        # Zeile 1: Dropdown-Menü
+        # Line 1: Dropdown-Menü
         tk.Label(row1, text="Distribution:", bg="#f3e6ff").pack(side="left", padx=5)
         self.distribution_var = tk.StringVar(value="Normal Distribution")
         distribution_menu = ttk.Combobox(row1, textvariable=self.distribution_var,
@@ -107,7 +116,7 @@ class ScenAIroUI(tk.Frame):
                                          state="readonly")
         distribution_menu.pack(side="left", padx=5)
 
-        # Zeile 2: Checkboxen zur Achsenauswahl und Button
+        # Line 2: Checkboxes for axis selection and button
         tk.Label(row2, text="Apply to:", bg="#f3e6ff").pack(side="left", padx=5)
         self.apply_x = tk.BooleanVar(value=True)
         self.apply_y = tk.BooleanVar(value=True)
@@ -117,33 +126,6 @@ class ScenAIroUI(tk.Frame):
         update_button = ttk.Button(row2, text="Update Distribution", command=self.__plotSamplingPointDistribution)
         update_button.pack(side="right", padx=5)
 
-        ## Segmentierungs-Frame hinzufügen
-        self.segmentation_frame = tk.LabelFrame(self.left_frame, text="Point Cloud Segmentation",
-                                                font=("Helvetica", 12, "bold"), bg="#F5E0D3", fg="#333")
-        self.segmentation_frame.pack(fill="x", padx=5, pady=10)
-
-        # Zeile 1: Dropdown-Menü zur Auswahl der Methode
-        row1 = tk.Frame(self.segmentation_frame, bg="#F5E0D3")
-        row1.pack(fill="x", padx=5, pady=2)
-
-        tk.Label(row1, text="Method:", bg="#F5E0D3").pack(side="left", padx=5)
-        self.segmentation_method = tk.StringVar(value="K-Means")
-        segmentation_menu = ttk.Combobox(row1, textvariable=self.segmentation_method,
-                                         values=["K-Means", "DBSCAN", "Threshold"], state="readonly")
-        segmentation_menu.pack(side="left", padx=5)
-
-        # Zeile 2: Checkboxen zur Achsenauswahl und Button
-        row2 = tk.Frame(self.segmentation_frame, bg="#F5E0D3")
-        row2.pack(fill="x", padx=5, pady=2)
-
-        tk.Label(row2, text="Apply to:", bg="#F5E0D3").pack(side="left", padx=5)
-        self.segment_x = tk.BooleanVar(value=True)
-        self.segment_y = tk.BooleanVar(value=True)
-        tk.Checkbutton(row2, text="X-Axis", variable=self.segment_x, bg="#F5E0D3").pack(side="left", padx=5)
-        tk.Checkbutton(row2, text="Y-Axis", variable=self.segment_y, bg="#F5E0D3").pack(side="left", padx=5)
-
-        segmentation_button = ttk.Button(row2, text="Start Segmentation", command=self.__startSegmentation)
-        segmentation_button.pack(side="right", padx=5)
 
         ## Rechter Haupt-Frame: Oberer und unterer Bereich
         self.right_frame_top = tk.Frame(self.right_frame, bg="#f0f4f8")
@@ -203,8 +185,8 @@ class ScenAIroUI(tk.Frame):
         # self.dist_canvas.get_tk_widget().config(height=reduced_plot_height // 2)  # Distribution auf halber Höhe
 
     def __initializeInputSection(self, title, fields, bg_color, parent, save_command=None, load_command=None):
-        section_frame = tk.LabelFrame(parent, text=title, font=("Helvetica", 12, "bold"), bg=bg_color, fg="#333")
-        section_frame.pack(fill="x", padx=5, pady=5)
+        section_frame = tk.LabelFrame(parent, text=title, font=("Helvetica", 10, "bold"), bg=bg_color, fg="#333")
+        section_frame.pack(fill="x", padx=3, pady=3)
         section_frame.pack_propagate(False)  # Verhindert Größenanpassung
         section_frame.config(width=160)  # Breite von 180 px
 
@@ -269,7 +251,7 @@ class ScenAIroUI(tk.Frame):
         separator_vertical.pack(side="left", fill="y", padx=5)
 
         # Labeling & Data Creation - Rechts
-        labeling_data_frame = tk.LabelFrame(main_section_frame, text="Labeling & Data Creation",
+        labeling_data_frame = tk.LabelFrame(main_section_frame, text="Data Creation",
                                             font=("Helvetica", 12, "bold"), bg="#ececec", fg="#333")
         labeling_data_frame.pack(side="left", expand=True, fill="both", padx=(5, 0), pady=0)
 
@@ -277,8 +259,13 @@ class ScenAIroUI(tk.Frame):
         labeling_data_row = tk.Frame(labeling_data_frame, bg="#ececec")
         labeling_data_row.pack(anchor="w", padx=10, pady=5)
         self.labeling_var = tk.BooleanVar(value=False)
+        self.labeling_exclImg =tk.BooleanVar(value=False)
 
         ttk.Checkbutton(labeling_data_row, text="Enable Labeling", variable=self.labeling_var).pack(side="left",
+                                                                                                    padx=(0, 10))
+        ttk.Checkbutton(labeling_data_row, text="Enable visual overlay validation images", variable=self.labeling_var).pack(side="left",
+                                                                                                    padx=(0, 10))
+        ttk.Checkbutton(labeling_data_row, text="Exclude Image Data", variable=self.labeling_exclImg).pack(side="left",
                                                                                                     padx=(0, 10))
         ttk.Button(labeling_data_row, text="Create Data", command=self.parent.generateData).pack(side="left")
 
