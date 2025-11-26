@@ -1,3 +1,4 @@
+import os
 import tkinter as tk
 from tkinter import ttk, messagebox, PhotoImage, filedialog
 import json
@@ -6,6 +7,7 @@ import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
+from tools.MetadataFileReader import MetadataFileReader
 from tools import SamplingPointGenerator, AircraftPositioningAgent
 from tools.RunwayGeometryCalculator import RunwayGeometryCalculator
 
@@ -59,6 +61,14 @@ class ScenAIroUI(tk.Frame):
         self.right_frame.pack(side="right", fill="both", expand=True, padx=5, pady=5)
 
         # Input fields left frame:
+
+        self.metadataFileReader = self.__initializeMetadataSection(
+            "Load Metadata Files for Image regeneration",
+            parent=self.left_frame,
+            load_command=self.loadMetadataFiles,
+            generate_command=self.generateImageFromMetadata,  
+        )
+
         self.airport_entries = self.__initializeInputSection(
             "Airport Parameters",
             ["Airport Name", "ICAO Code", "Runway Name", "Width", "Length", "Heading", "Latitude", "Longitude",
@@ -93,9 +103,10 @@ class ScenAIroUI(tk.Frame):
             ["Hours", "Minutes"],
             "#FFEDE0",
             parent=self.left_frame,
-            #load_command=self.loadTime,
-            #save_command=self.saveTime
+            load_command=self.loadTime,
+            save_command=self.saveTime
         )
+
 
         ## Distribution-Frame
         self.dummy_frame = tk.LabelFrame(self.left_frame, text="Distribution Settings",
@@ -211,6 +222,43 @@ class ScenAIroUI(tk.Frame):
             ttk.Button(button_frame, text="Load", command=load_command).pack(side="right", padx=5)
 
         return section_entries
+    
+    def __initializeMetadataSection(self, title, parent, load_command, generate_command):
+        bg_color = "#e8e8ff"
+        section_frame = tk.LabelFrame(parent, text=title, font=("Helvetica", 10, "bold"),
+                                    bg=bg_color, fg="#333")
+        section_frame.pack(fill="x", padx=3, pady=3)
+
+        # StringVar für den Ordnerpfad
+        self.metadata_path_var = tk.StringVar()
+
+        # Zeile mit Entry + Browse-Button
+        row = tk.Frame(section_frame, bg=bg_color)
+        row.pack(fill="x", padx=2, pady=2)
+
+        entry = ttk.Entry(row, textvariable=self.metadata_path_var, width=22)
+        entry.pack(side="left", fill="x", expand=True)
+
+        def browse_folder():
+            folder = filedialog.askdirectory(
+                title="Select Folder Containing JSON Files"
+            )
+            if folder:
+                self.metadata_path_var.set(folder)
+
+        ttk.Button(row, text="Browse", command=browse_folder).pack(side="left", padx=4)
+
+        # Buttons: Load + Generate
+        button_row = tk.Frame(section_frame, bg=bg_color)
+        button_row.pack(fill="x", pady=4)
+
+        ttk.Button(button_row,
+                text="Generate From Folder",
+                command=lambda: self.generateImagesFromFolder(self.metadata_path_var.get())
+                ).pack(side="left", padx=2)
+
+        return section_frame
+
 
     def __setupButtons(self, frame):
         # Gruppe 1: Save/Load Options
@@ -260,10 +308,11 @@ class ScenAIroUI(tk.Frame):
         labeling_data_row.pack(anchor="w", padx=10, pady=5)
         self.labeling_var = tk.BooleanVar(value=False)
         self.labeling_exclImg =tk.BooleanVar(value=False)
+        self.validation_var = tk.BooleanVar(value=False)
 
         ttk.Checkbutton(labeling_data_row, text="Enable Labeling", variable=self.labeling_var).pack(side="left",
                                                                                                     padx=(0, 10))
-        ttk.Checkbutton(labeling_data_row, text="Enable visual overlay validation images", variable=self.labeling_var).pack(side="left",
+        ttk.Checkbutton(labeling_data_row, text="Enable visual overlay validation images", variable=self.validation_var).pack(side="left",
                                                                                                     padx=(0, 10))
         ttk.Checkbutton(labeling_data_row, text="Exclude Image Data", variable=self.labeling_exclImg).pack(side="left",
                                                                                                     padx=(0, 10))
@@ -531,3 +580,68 @@ class ScenAIroUI(tk.Frame):
         angles = JSONManager.load_from_file()
         if angles:
             self.__populateEntryFields(self.angle_entries, angles)
+
+    def saveTime(self):
+        times = {key: self.time_entries[key].get() for key in self.time_entries}
+        file = JSONManager.save_to_file(times)
+        if file:
+            messagebox.showinfo("Success", f"Times saved to: {file}")
+
+    def loadTime(self):
+        times = JSONManager.load_from_file()
+        if times:
+            self.__populateEntryFields(self.time_entries, times)
+
+    def loadMetadataFiles(self, path=None):
+        # Wenn kein Pfad übergeben wurde, wie bisher über Dialog auswählen
+        if not path:
+            path = filedialog.askopenfilename(
+                defaultextension=".json",
+                filetypes=[("JSON files", "*.json")]
+            )
+            if not path:
+                return
+
+        try:
+            metadata_reader = MetadataFileReader(path)
+            metadata_reader.load_metadata()
+            messagebox.showinfo("Success", f"Metadata loaded from: {path}")
+            # Hier kannst du weitere Aktionen mit den geladenen Metadaten durchführen
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load metadata: {e}")
+
+    def generateImageFromMetadata(self, path=None):
+        # Wenn kein Pfad explizit übergeben wurde, nimm den aus dem Entry
+        if not path:
+            path = self.metadata_path_var.get()
+
+        if not path:
+            messagebox.showerror("Error", "Please select a metadata JSON file first.")
+            return
+
+        try:
+            reader = MetadataFileReader(path)
+            # load_metadata ist optional, generate_image_from_metadata ruft intern bei Bedarf auch _ensure_loaded auf
+            reader.load_metadata()
+            out_path = reader.generate_image_from_metadata()
+            messagebox.showinfo("Success", f"Image generated from metadata:\n{out_path}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to generate image: {e}")
+
+    def generateImagesFromFolder(self, folder_path):
+        if not folder_path:
+            folder_path = filedialog.askdirectory(title="Select folder with JSON files")
+            if not folder_path:
+                return
+
+        try:
+            reader = MetadataFileReader(file_path="", screenshot_dir=folder_path)
+            out_paths = reader.process_folder(folder_path, use_sim=True)
+
+            messagebox.showinfo("Success", f"{len(out_paths)} images generated.")
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed: {e}")
+
+
+

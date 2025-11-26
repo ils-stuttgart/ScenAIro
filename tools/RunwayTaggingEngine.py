@@ -1,3 +1,4 @@
+from datetime import datetime
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -6,11 +7,27 @@ import numpy as np
 import json
 
 
+
 class RunwayTaggingEngine:
     def __init__(self):
         super().__init__()
 
-    
+    @staticmethod
+    def _make_json_safe(obj):
+        """
+        Wandelt NumPy-Arrays und -Skalare in JSON-kompatible Python-Typen um.
+        """
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        # NumPy-Skalare: np.float32, np.int64, ...
+        if isinstance(obj, np.generic):
+            return obj.item()
+        if isinstance(obj, dict):
+            return {k: RunwayTaggingEngine._make_json_safe(v) for k, v in obj.items()}
+        if isinstance(obj, (list, tuple)):
+            return [RunwayTaggingEngine._make_json_safe(v) for v in obj]
+        return obj
+
 
     # ---------------------
     # camera- and pixel calculations
@@ -39,7 +56,7 @@ class RunwayTaggingEngine:
             [-np.sin(roll_rad), 0, np.cos(roll_rad)]
         ])
 
-        R = R_yaw @ R_pitch @ R_roll
+        R = R_pitch @ R_yaw @ R_roll #R_yaw @ R_pitch @ R_roll
         return R @ vector
 
     def calculatePixelCoordinates(self, point, horizontal_fov, vertical_fov, screen_width, screen_height):
@@ -81,7 +98,7 @@ class RunwayTaggingEngine:
 
         # Berechnung der Pixelkoordinaten auf dem Bildschirm
         x_pixel = ((screen_width / 2) + u) 
-        y_pixel =((screen_height / 2) - v) 
+        y_pixel =((screen_height / 2) - v)   
 
         print(f"Pixelkoordinaten: ({x_pixel}, {y_pixel})")
 
@@ -89,13 +106,15 @@ class RunwayTaggingEngine:
 
 
 
+
     # ---------------------
     # Visualisation for Testing
     # ---------------------
 
-    def saveAnnotation(self, screenshot_name, structured_objects, image_width, image_height, horizontal_fov_degrees, vertical_fov_degrees, output_dir):
+    def saveAnnotation(self, screenshot_name, structured_objects, image_width, image_height, horizontal_fov_degrees, vertical_fov_degrees, output_dir, airport_data=None, cone_data=None, geo_point=None, generated_point=None, aircraft_orientation=None, daytime=None):
         os.makedirs(output_dir, exist_ok=True)
         annotations = []
+
         
         for obj_id, obj in enumerate(structured_objects):
             pixel_coords = []
@@ -136,31 +155,111 @@ class RunwayTaggingEngine:
                 {"id": 1, "name": "runway", "supercategory": "infrastructure"}
             ]
         }
+
+        if airport_data is not None:
+            coco_format["runway_data"] = airport_data
+
+        if cone_data is not None:
+            coco_format["landing_approach_cone"] = cone_data
+
+        if geo_point is not None:
+            coco_format["position_of_aircraft"] = geo_point
+
+        if generated_point is not None:
+
+            if isinstance(generated_point, np.ndarray):
+                gx, gy, gz = generated_point.tolist()
+            else:
+                # angenommen: (x, y, z) oder [x, y, z]
+                gx, gy, gz = generated_point
+
+            # Boden-Distanz über x,y (Pythagoras)
+            distance_ground = float(np.sqrt(gx**2 + gy**2))
+
+            # Höhenunterschied (z-Komponente)
+            altitude_difference = float(gz)
+
+            distance_ground = round(distance_ground, 2)
+            altitude_difference = round(altitude_difference, 2)
+
+            coco_format["distance_aircraft_2_runway"] = {
+                "ground_distance_in_meters": distance_ground,
+                "altitude_difference_in_meters": altitude_difference,
+            }
+
+        if aircraft_orientation is not None:
+            coco_format["aircraft_orientation"] = {
+                "pitch": aircraft_orientation[0],
+                "yaw": aircraft_orientation[1],
+                "roll": aircraft_orientation[2]
+            }
+
+        if daytime is not None:
+            coco_format["daytime"] = daytime
+
         
         json_filename = os.path.join(output_dir, f"{screenshot_name[:-4]}.json")
+
+        # Alles JSON-kompatibel machen (np.ndarray → list, np.float32 → float, ...)
+        coco_format_safe = self._make_json_safe(coco_format)
+
         with open(json_filename, "w") as json_file:
-            json.dump(coco_format, json_file, indent=4)
-        
+            json.dump(coco_format_safe, json_file, indent=4)
+
         print(f"COCO-Annotation gespeichert: {json_filename}")
 
-    def doOverlayLabelsOnImage(self, image_path, output_path, structured_objects,
-                               horizontal_fov_degrees, vertical_fov_degrees,
-                               screen_width, screen_height,
-                               cam_pitch, cam_yaw, cam_roll):
 
-        image = cv2.imread(image_path)
-        if image is None:
-            raise FileNotFoundError(f"Bild konnte nicht geladen werden: {image_path}")
+    def doOverlayLabelsOnImage(self, 
+                               image_path, 
+                               output_path, 
+                               structured_objects,
+                               horizontal_fov_degrees, 
+                               vertical_fov_degrees,
+                               screen_width, 
+                               screen_height,
+                               cam_pitch, 
+                               cam_yaw, 
+                               cam_roll, 
+                               airport_data = None, 
+                               cone_data = None,
+                               geo_point = None,
+                               generated_point = None,
+                               daytime = None,
+                               excludeImg=False):
 
         output_dir = os.path.dirname(output_path)
         os.makedirs(output_dir, exist_ok=True)
 
         if not structured_objects:
             raise ValueError("Keine strukturierten Objekte vorhanden!")
-        
-        # safe Annotation as JSON #todo add input metadata here
-        self.saveAnnotation(os.path.basename(image_path), structured_objects, screen_width, screen_height, horizontal_fov_degrees, vertical_fov_degrees, os.path.dirname(output_path))
 
+        # JSON IMMER schreiben, unabhängig von Bildern
+        self.saveAnnotation(
+            os.path.basename(image_path),
+            structured_objects,
+            screen_width,
+            screen_height,
+            horizontal_fov_degrees,
+            vertical_fov_degrees,
+            os.path.dirname(output_path),
+            airport_data=airport_data,
+            cone_data=cone_data,
+            geo_point=geo_point,
+            generated_point=generated_point,
+            aircraft_orientation=(cam_pitch, cam_yaw, cam_roll),
+            daytime=daytime
+        )
+
+        # Wenn Bilder ausgeschlossen: hier abbrechen
+        if excludeImg:
+            print("[INFO] excludeImg=True – kein Overlay-Image erstellt, nur JSON.")
+            return
+
+        # Ab hier nur noch der Bild-/Overlay-Teil:
+        image = cv2.imread(image_path)
+        if image is None:
+            raise FileNotFoundError(f"Bild konnte nicht geladen werden: {image_path}")
+        
         # Alle Runway-Eckpunkte für jedes StructuredObject zeichnen
     
         for obj in structured_objects:
@@ -188,7 +287,8 @@ class RunwayTaggingEngine:
                 cv2.line(image, pixel_coords[1], pixel_coords[2], (0, 255, 0), 1)  # B -> C
                 cv2.line(image, pixel_coords[2], pixel_coords[3], (0, 255, 0), 1)  # C -> D
                 cv2.line(image, pixel_coords[3], pixel_coords[0], (0, 255, 0), 1)  # D -> A
-
+            
+        
         if not cv2.imwrite(output_path, image):
             raise IOError(f"Fehler beim Speichern des Bildes unter: {output_path}")
 

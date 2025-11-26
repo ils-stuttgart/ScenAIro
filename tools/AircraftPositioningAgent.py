@@ -22,7 +22,11 @@ class AircraftPositioningAgent:
         self.event_freeze_lat_long = self.ae.find("FREEZE_LATITUDE_LONGITUDE_TOGGLE")
         self.event_pause = self.ae.find("PAUSE_ON")
 
-    def positionAircraftInSimAndTakeScreenshot(self, latitude, longitude, altitude, pitch, heading, roll, screenshot_path, window_width, window_height):
+        self.event_clock_hours_set   = self.ae.find("CLOCK_HOURS_SET")
+        self.event_clock_minutes_set = self.ae.find("CLOCK_MINUTES_SET")
+        self.event_clock_seconds_set = self.ae.find("CLOCK_SECONDS_SET")
+
+    def positionAircraftInSimAndTakeScreenshot(self, latitude, longitude, altitude, pitch, heading, roll, screenshot_path, window_width, window_height, setSimHour, setSimMin, excludeImg):
         try:
             heading = np.radians(heading)
             self.aq.set("PLANE_LATITUDE", latitude) #radian
@@ -32,10 +36,20 @@ class AircraftPositioningAgent:
             self.aq.set("PLANE_HEADING_DEGREES_TRUE", heading) #radians
             self.aq.set("PLANE_BANK_DEGREES", roll) #radians
 
+            # Set Time in Sim
+            self.event_clock_hours_set(setSimHour)
+            self.event_clock_minutes_set(setSimMin)
+
             # Trigger freeze events
             self.event_freeze_altitude()
             self.event_freeze_lat_long()
             self.event_pause()
+
+            # Exlude Image creation
+            if excludeImg:
+                now = datetime.now().strftime("%Y-%m-%d_%H%M%S_%f")
+                print(f"[INFO] excludeImg=True – kein Screenshot, benutze Name {now}")
+                return now
 
             # Get the window with the title 'Microsoft Flight Simulator'
             window = pygetwindow.getWindowsWithTitle('Microsoft Flight Simulator')

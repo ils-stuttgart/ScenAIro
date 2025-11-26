@@ -154,7 +154,6 @@ class ScenAIro(tk.Tk):
                 heading = 0
 
                 # Transformiere Punkte in Geo-Koordinaten
-                # Heading Wert entfernen, da dieser nicht benötigt wird
                 geo_points = GeoCoordinateProjector.transform_points(
                     points=generated_points,
                     center_lat=center_lat,
@@ -167,10 +166,43 @@ class ScenAIro(tk.Tk):
                     raise ValueError("Die Transformation der Punkte in Geo-Koordinaten ist fehlgeschlagen.")
 
                 # Screenshot Save Path
-                screenshot_path = r'Insert Folder Path here'
+                screenshot_path = r'C:\Users\mfs2024\Desktop\Saymon\Test'
+
+                # Exclude Image creation
+                excludeImg = self.ui.labeling_exclImg.get()
 
                 # Berechnung der Runway-Eckpunkte
                 corners = self.airport.calculateRunwayCorners()
+
+                # Get Time Settings for Sim
+                setSimHour = self.__isIntValue(self.ui.time_entries["Hours"].get(), "Hours")
+                setSimMin  = self.__isIntValue(self.ui.time_entries["Minutes"].get(), "Minutes")
+
+                airport_metadata = {
+                    "name": self.airport.name,
+                    "icao_code": self.airport.icao_code,
+                    "runway_name": self.airport.runway_name,
+                    "runway_width": self.airport.runway_width,
+                    "runway_length": self.airport.runway_length,
+                    "runway_heading": self.airport.runway_heading,
+                    "runway_center": self.airport.runway_center,
+                    "start_height": self.airport.start_height,
+                    "end_height": self.airport.end_height,
+                }
+                cone_metadata = {
+                    "apex": self.apex,
+                    "lateral_angle_left": self.lateral_angle_left,
+                    "lateral_angle_right": self.lateral_angle_right,
+                    "vertical_min_angle": self.vertical_min_angle,
+                    "vertical_max_angle": self.vertical_max_angle,
+                    "max_distance": self.max_distance,
+                    "number_of_points": len(generated_points),
+                }
+
+                daytime = {
+                    "hours": setSimHour,
+                    "minutes": setSimMin
+                }
 
                 # Start SimConnect
                 sim = SimConnect()
@@ -182,7 +214,7 @@ class ScenAIro(tk.Tk):
                     altitude *= 3.28084  # Umrechnung in Fuß
                     pitch = 0.0
                     roll = 0.0
-                    vertical_fov_degrees = np.degrees(1.028) 
+                    vertical_fov_degrees = np.degrees(0.8) #np.degrees(1.028) 
                     screen_width = 2560
                     screen_height = 1440
                     aspectRatio = screen_width / screen_height
@@ -191,7 +223,7 @@ class ScenAIro(tk.Tk):
 
 
                     screenshot_name = coord_setter.positionAircraftInSimAndTakeScreenshot(
-                        latitude, longitude, altitude, pitch, (runwayHeading-180), roll, screenshot_path, screen_width, screen_height
+                        latitude, longitude, altitude, pitch, (runwayHeading-180), roll, screenshot_path, screen_width, screen_height, setSimHour, setSimMin, excludeImg,
                     )
     	            
 
@@ -209,7 +241,13 @@ class ScenAIro(tk.Tk):
                         screen_height=screen_height,
                         cam_pitch=0,
                         cam_yaw=0,
-                        cam_roll=0
+                        cam_roll=0,
+                        airport_data = airport_metadata,
+                        cone_data= cone_metadata, 
+                        geo_point= geo_point,
+                        generated_point= generated_point,
+                        daytime=daytime,
+                        excludeImg= excludeImg
                     )
 
 
