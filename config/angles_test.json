@@ -1,0 +1,8 @@
+{
+    "Pitch Min": "-10",
+    "Pitch Max": "10",
+    "Yaw Min": "-10",
+    "Yaw Max": "10",
+    "Bank Min": "-10",
+    "Bank Max": "10"
+}

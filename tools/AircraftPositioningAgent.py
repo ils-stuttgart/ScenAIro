@@ -28,7 +28,10 @@ class AircraftPositioningAgent:
 
     def positionAircraftInSimAndTakeScreenshot(self, latitude, longitude, altitude, pitch, heading, roll, screenshot_path, window_width, window_height, setSimHour, setSimMin, excludeImg):
         try:
+            pitch = np.radians(pitch)
             heading = np.radians(heading)
+            roll = np.radians(roll)
+            
             self.aq.set("PLANE_LATITUDE", latitude) #radian
             self.aq.set("PLANE_LONGITUDE", longitude) #radian
             self.aq.set("PLANE_ALTITUDE", altitude) #feet

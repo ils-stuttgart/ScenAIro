@@ -34,29 +34,49 @@ class RunwayTaggingEngine:
     # ---------------------
 
     def rotate3DPoint(self, vector, pitch, yaw, roll):
-        pitch_rad = np.radians(pitch)
-        yaw_rad = np.radians(yaw)
-        roll_rad = np.radians(roll)
-
-        R_pitch = np.array([
+        # Umwandlung in Radiant
+        # Wir erwarten hier:
+        # pitch: Rotation um Y-Achse (Nase hoch/runter)
+        # yaw:   Rotation um Z-Achse (Links/Rechts drehen)
+        # roll:  Rotation um X-Achse (Kippen)
+        
+        p = np.radians(pitch)
+        y = np.radians(yaw)
+        r = np.radians(roll)
+        
+        # Rotation um X-Achse (Roll)
+        mat_roll = np.array([
             [1, 0, 0],
-            [0, np.cos(pitch_rad), -np.sin(pitch_rad)],
-            [0, np.sin(pitch_rad), np.cos(pitch_rad)]
+            [0, np.cos(r), -np.sin(r)],
+            [0, np.sin(r), np.cos(r)]
         ])
 
-        R_yaw = np.array([
-            [-np.cos(yaw_rad), np.sin(yaw_rad), 0],
-            [-np.sin(yaw_rad), -np.cos(yaw_rad), 0],
+        # Rotation um Y-Achse (Pitch)
+        # Achtung: In deinem System (X=Tiefe, Z=Höhe) ist Pitch eine Rotation um Y.
+        mat_pitch = np.array([
+            [np.cos(p), 0, np.sin(p)],
+            [0, 1, 0],
+            [-np.sin(p), 0, np.cos(p)]
+        ])
+
+        # Rotation um Z-Achse (Yaw)
+        mat_yaw = np.array([
+            [np.cos(y), -np.sin(y), 0],
+            [np.sin(y), np.cos(y), 0],
             [0, 0, 1]
         ])
 
-        R_roll = np.array([
-            [np.cos(roll_rad), 0, np.sin(roll_rad)],
-            [0, 1, 0],
-            [-np.sin(roll_rad), 0, np.cos(roll_rad)]
-        ])
-
-        R = R_pitch @ R_yaw @ R_roll #R_yaw @ R_pitch @ R_roll
+        # Reihenfolge der Rotation: Zuerst Yaw, dann Pitch, dann Roll (übliche Konvention)
+        # Oder abhängig vom Flugzeug-Koordinatensystem. 
+        # Standard: R = R_roll @ R_pitch @ R_yaw
+        R = mat_pitch @ mat_roll @ mat_yaw
+        #R = mat_pitch @ mat_yaw @ mat_roll
+        #R = mat_yaw @ mat_pitch @ mat_roll
+        #R = mat_yaw @ mat_roll @ mat_pitch
+        #R = mat_roll @ mat_pitch @ mat_yaw 
+        #R = mat_roll @ mat_yaw @ mat_pitch
+        
+        
         return R @ vector
 
     def calculatePixelCoordinates(self, point, horizontal_fov, vertical_fov, screen_width, screen_height):
@@ -119,7 +139,7 @@ class RunwayTaggingEngine:
         for obj_id, obj in enumerate(structured_objects):
             pixel_coords = []
             for label, point in zip(["A", "B", "C", "D"], [obj.A, obj.B, obj.C, obj.D]):
-                rotated_point = self.rotate3DPoint(point, 0, 0, 0)
+                rotated_point = self.rotate3DPoint(point, *aircraft_orientation)
                 x_pixel, y_pixel = self.calculatePixelCoordinates(
                     rotated_point, horizontal_fov_degrees, vertical_fov_degrees, image_width, image_height
                 )
@@ -266,14 +286,15 @@ class RunwayTaggingEngine:
             pixel_coords = []
 
             for label, point in zip(["A", "B", "C", "D"], [obj.A, obj.B, obj.C, obj.D]):
-                # point, roll, yaw, pitch
-                rotated_point = self.rotate3DPoint(point, 0, 0, 0)
+                # KORREKTUR: Explizite Zuordnung der Winkel zu den Achsen
+                # Wir übergeben: pitch, yaw, roll
+                rotated_point = self.rotate3DPoint(point, cam_pitch, cam_yaw, cam_roll) 
 
                 (x_pixel, y_pixel) = self.calculatePixelCoordinates(
                     rotated_point, horizontal_fov_degrees, vertical_fov_degrees, screen_width, screen_height
                 )
                 x_pixel = int(round(x_pixel))
-                y_pixel = int(round(y_pixel))
+                y_pixel = screen_height - int(round(y_pixel))
 
                 if 0 <= x_pixel < image.shape[1] and 0 <= y_pixel < image.shape[0]:
                     cv2.circle(image, (x_pixel, y_pixel), radius=3, color=(0, 0, 255), thickness=-1)

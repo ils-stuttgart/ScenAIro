@@ -8,9 +8,6 @@ class SamplingPointGenerator:
     def __transformAimingPoint(apex, heading_rad):
         """
         Rotiert den Apex entsprechend dem Heading um die Z-Achse.
-        :param apex: Tuple oder Liste (x, y, z) des Apex
-        :param heading: Heading in Grad
-        :return: Transformierter Apex als numpy-Array
         """
         rotation_matrix = np.array([
             [np.cos(heading_rad), -np.sin(heading_rad), 0],
@@ -21,22 +18,54 @@ class SamplingPointGenerator:
         return apex_transformed
 
     @staticmethod
-    def generateCone(apex, lateral_angle_left, lateral_angle_right, vertical_min_angle,
-                     vertical_max_angle, max_distance, num_points, heading):
+    def __generate_distributed_values(min_val, max_val, num_points, distribution_type, is_centered_property=False):
         """
-        Generiert eine Punktwolke, bei der der Kegel entlang der Landebahn-Ausrichtung (Heading) liegt.
-        Horizontalwinkel (theta) in der Ebene der Landebahn, Vertikalwinkel (phi) senkrecht zur Landebahn.
+        Generiert Werte basierend auf der gewünschten Verteilung.
+        
+        :param is_centered_property: 
+            True = Wir verteilen Winkel (wir wollen die Dichte in der Mitte/Achse haben).
+            False = Wir verteilen Distanz (wir wollen die Dichte am Start/Apex haben).
+        """
+        range_val = max_val - min_val
+        
+        # 1. "Normal Distribution" -> Soll jetzt UNIFORM (gleichmäßig) sein
+        if distribution_type == "Normal Distribution":
+            return np.random.uniform(min_val, max_val, num_points)
+            
+        # 2. "Parabel" -> Soll an den RÄNDERN mehr sein (U-Form)
+        elif distribution_type == "Parabel":
+            # Beta(0.5, 0.5) erzeugt eine "Badewannenkurve" (viel außen, wenig innen)
+            raw = np.random.beta(0.5, 0.5, num_points)
+            return min_val + raw * range_val
+            
+        # 3. "Exponentiell" -> Soll am Anfang bzw. in der Mitte viel sein
+        elif distribution_type == "Exponentiell":
+            if is_centered_property:
+                # Fall Y-Achse (Winkel): Dichte soll in der MITTE hoch sein
+                # Wir nutzen hier eine Normalverteilung (Gauß), da diese in der Mitte dicht ist
+                mean = (min_val + max_val) / 2
+                sigma = range_val / 6  # Breite der Streuung
+                values = np.random.normal(mean, sigma, num_points)
+                return np.clip(values, min_val, max_val)
+            else:
+                # Fall X-Achse (Distanz): Dichte soll am START (0) hoch sein
+                # Wir nutzen eine exponentielle Verteilung
+                scale = range_val / 4  # Steuert wie schnell die Dichte abfällt
+                values = np.random.exponential(scale, num_points)
+                # Verschieben auf min_val (meist 0 bei Distanz)
+                values = values + min_val
+                # Abschneiden bei max, damit keine Punkte zu weit weg liegen
+                return np.clip(values, min_val, max_val)
+            
+        # Fallback
+        return np.random.uniform(min_val, max_val, num_points)
 
-        :param apex: Spitze des Kegels (x, y, z)
-        :param lateral_angle_left: Lateraler Winkel (links) in Grad
-        :param lateral_angle_right: Lateraler Winkel (rechts) in Grad
-        :param vertical_min_angle: Vertikale Minimalwinkel in Grad
-        :param vertical_max_angle: Vertikale Maxwinkel in Grad
-        :param max_distance: Maximale Distanz der Punkte
-        :param inclination: Neigung des Kegels (Pitch, Yaw, Roll) in Grad
-        :param num_points: Anzahl der Punkte
-        :param heading: Heading der Landebahn in Grad
-        :return: Punkte des Kegels als numpy-Array (N x 3)
+    @staticmethod
+    def generateCone(apex, lateral_angle_left, lateral_angle_right, vertical_min_angle,
+                     vertical_max_angle, max_distance, num_points, heading, aircraftOrientationAngles=None,
+                     distribution_settings=None):
+        """
+        Generiert eine Punktwolke mit spezifischen Verteilungsregeln.
         """
         # Konvertiere Winkel in Radiant
         heading_rad = np.radians(heading)
@@ -55,15 +84,41 @@ class SamplingPointGenerator:
             [0, 0, 1]
         ])
 
-        # Generiere die Distanzen und zufällige Winkel
-        distances = np.linspace(0, max_distance, num_points)
-        theta = np.random.uniform(lateral_left_rad, lateral_right_rad, num_points)  # Horizontale Winkel (Y-Z-Ebene)
-        phi = np.random.uniform(vertical_min_rad, vertical_max_rad, num_points)  # Vertikalwinkel zur X-Achse
+        # --- VERTEILUNGSAUSWERTUNG ---
+        dist_type = "Normal Distribution"
+        apply_x = False
+        apply_y = False
+
+        if distribution_settings:
+            dist_type = distribution_settings.get("type", "Normal Distribution")
+            apply_x = distribution_settings.get("apply_x", False)
+            apply_y = distribution_settings.get("apply_y", False)
+
+        # 1. Distanzen (X-Achse)
+        # is_centered_property=False -> Bei "Exponentiell" Start bei 0 (Apex)
+        if apply_x:
+            distances = SamplingPointGenerator.__generate_distributed_values(
+                0, max_distance, num_points, dist_type, is_centered_property=False
+            )
+        else:
+            distances = np.random.uniform(0, max_distance, num_points)
+
+        # 2. Horizontale Winkel (Y-Achse / Breite)
+        # is_centered_property=True -> Bei "Exponentiell" Dichte in der Mitte
+        if apply_y:
+            theta = SamplingPointGenerator.__generate_distributed_values(
+                lateral_left_rad, lateral_right_rad, num_points, dist_type, is_centered_property=True
+            )
+        else:
+            theta = np.random.uniform(lateral_left_rad, lateral_right_rad, num_points)
+
+        # 3. Vertikale Winkel (Z-Achse / Höhe) - bleibt vorerst uniform
+        phi = np.random.uniform(vertical_min_rad, vertical_max_rad, num_points)
 
         # Punkte in kartesischen Koordinaten berechnen
-        x = distances  # Kegellängsachse entlang der X-Achse
-        y = distances * np.sin(theta)  # Horizontale Verteilung (Y-Achse)
-        z = distances * np.sin(phi)  # Vertikale Verteilung (Z-Achse)
+        x = distances
+        y = distances * np.sin(theta)
+        z = distances * np.sin(phi)
 
         # Punkte zu einem Array zusammenführen
         points = np.vstack((x, y, z)).T
@@ -74,4 +129,19 @@ class SamplingPointGenerator:
         # Punkte um den rotierten Apex verschieben
         points_rotated += apex_transformed
 
-        return points_rotated, apex_transformed
+        # Generiere die zufälligen Orientierungen
+        pitchValue = np.random.uniform(aircraftOrientationAngles["pitchMin"], aircraftOrientationAngles["pitchMax"], num_points)
+        yawValue = np.random.uniform(aircraftOrientationAngles["yawMin"], aircraftOrientationAngles["yawMax"], num_points)
+        rollValue = np.random.uniform(aircraftOrientationAngles["rollMin"], aircraftOrientationAngles["rollMax"], num_points)
+
+        # Sicherstellen, dass pitchValue ein Array ist (Fix für "not subscriptable")
+        if np.isscalar(pitchValue):
+            pitchValue = np.full(num_points, pitchValue)
+
+        randomAircraftOrientation = {
+            "pitch": pitchValue,
+            "yaw": yawValue,
+            "roll": rollValue
+        }
+
+        return points_rotated, apex_transformed, randomAircraftOrientation

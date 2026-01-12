@@ -40,7 +40,7 @@ class StructuredObject:
 class RunwayCornerAnnotationStruct:
     def __init__(self):
         zero_point = (0.0, 0.0, 0.0)
-        dummy_angle = Angle(0.0, 0.0, 0.0)
+        dummy_angle = Angle(0.0, 0.0, 0.0) #Angles set to zero TODO
         self.structuredObjects = StructuredObject(zero_point, zero_point, zero_point, zero_point, dummy_angle)
         self.angles = dummy_angle
         self.point = Point(0.0, 0.0, 0.0)
