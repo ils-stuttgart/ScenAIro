@@ -59,8 +59,8 @@ class RunwayTaggingEngine:
         """
         Rotate a 3D point using aircraft orientation angles.
         
-        Applies rotation matrices in the order: Yaw -> Pitch -> Roll
-        (standard aerospace convention).
+        Applies rotation to transform world coordinates to camera coordinates.
+        The sign convention may differ between the simulator and the rotation matrices.
         
         Args:
             vector: 3D point as numpy array [x, y, z]
@@ -69,7 +69,7 @@ class RunwayTaggingEngine:
             roll: Rotation around X-axis (banking) in degrees
             
         Returns:
-            Rotated 3D point as numpy array
+            Rotated 3D point as numpy array (in camera coordinates)
             
         Note:
             Coordinate system convention:
@@ -77,10 +77,18 @@ class RunwayTaggingEngine:
             - Y-axis: Left/right
             - Z-axis: Up/down (height)
         """
+        # If all angles are zero, return the vector unchanged
+        if pitch == 0 and yaw == 0 and roll == 0:
+            return vector
+        
         # Convert angles from degrees to radians
-        p = np.radians(pitch)
-        y = np.radians(yaw)
-        r = np.radians(roll)
+        # To transform world coordinates to camera coordinates, we need the INVERSE
+        # of the camera rotation. For rotation matrices, inverse = transpose.
+        # Yaw and roll have opposite sign convention in the simulator, but pitch
+        # needs to remain as-is for correct visual alignment.
+        p = np.radians(pitch)      # Keep pitch as-is
+        y = np.radians(-yaw)       # Negate yaw for inverse
+        r = np.radians(roll)       # Keep roll as-is 
         
         # Rotation matrix around X-axis (Roll)
         mat_roll = np.array([
@@ -90,7 +98,6 @@ class RunwayTaggingEngine:
         ])
 
         # Rotation matrix around Y-axis (Pitch)
-        # Note: In this coordinate system (X=depth, Z=height), pitch rotates around Y
         mat_pitch = np.array([
             [np.cos(p), 0, np.sin(p)],
             [0, 1, 0],
@@ -104,10 +111,13 @@ class RunwayTaggingEngine:
             [0, 0, 1]
         ])
 
-        # Combined rotation: R = R_roll @ R_pitch @ R_yaw (standard convention)
-        R = mat_yaw @ mat_pitch @ mat_roll
+        # Combined rotation - REVERSED order for inverse: roll @ pitch @ yaw
+        R = mat_roll @ mat_pitch @ mat_yaw
         
-        return R @ vector
+        result = R @ vector
+        print(f"[DEBUG] rotate3DPoint: input={vector}, angles=({pitch},{yaw},{roll}), output={result}")
+        
+        return result
 
     def calculatePixelCoordinates(self, point, horizontal_fov, vertical_fov, 
                                    screen_width, screen_height):
@@ -119,7 +129,7 @@ class RunwayTaggingEngine:
         
         Args:
             point: Tuple (x, y, z) where:
-                - x: Distance to point in camera direction (depth)
+                - x: Distance to point in camera direction (depth, positive = in front)
                 - y: Deviation left/right
                 - z: Deviation up/down
             horizontal_fov: Horizontal field of view in degrees
@@ -140,7 +150,6 @@ class RunwayTaggingEngine:
 
         # Extract coordinates: x = view direction, y = left/right, z = up/down
         x, y, z = point
-        distance = np.sqrt(x ** 2 + y ** 2 + z ** 2)
 
         # Project onto image coordinates using perspective projection
         u = y * (f_horizontal / x)
@@ -149,8 +158,6 @@ class RunwayTaggingEngine:
         # Convert to pixel coordinates (origin at top-left of screen)
         x_pixel = (screen_width / 2) + u
         y_pixel = (screen_height / 2) - v
-
-        print(f"Pixel coordinates: ({x_pixel}, {y_pixel})")
 
         return (int(round(x_pixel)), int(round(y_pixel)))
 

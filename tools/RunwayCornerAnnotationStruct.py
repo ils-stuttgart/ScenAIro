@@ -143,9 +143,6 @@ class RunwayCornerAnnotationStruct:
         # Apply rotation
         rotated_coords = R_alpha @ original_coords
 
-        # Print debug information
-        print(f"Rotated X: {rotated_coords[0]}, Rotated Y: {rotated_coords[1]}, Z: {zDistance}")
-
         return (rotated_coords[0], rotated_coords[1], rotated_coords[2])
 
     def calculateAirplane2RunwayCornerStructure(self, point, runway_corners, angles, runwayHeading, centerHeight):

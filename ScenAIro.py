@@ -533,7 +533,7 @@ class ScenAIro(tk.Tk):
                     horizontal_fov_degrees = self.__calculateHorizontalFOV(vertical_fov_degrees, aspectRatio)
                     
                     # Calculate final heading (runway direction - camera offset)
-                    final_heading = (runwayHeading - 180) - yaw_offset
+                    final_heading = (runwayHeading - 180) + yaw_offset     
 
                     # --- Step 7: Position Aircraft and Capture Screenshot ---
                     screenshot_name = coord_setter.positionAircraftInSimAndTakeScreenshot(
