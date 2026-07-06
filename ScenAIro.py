@@ -24,6 +24,9 @@ Author: ScenAIro Team
 import tkinter as tk
 from tkinter import messagebox
 import numpy as np
+import gc
+import time
+import traceback
 
 # SimConnect integration for Microsoft Flight Simulator
 from dependencies.SimConnect import *
@@ -438,6 +441,9 @@ class ScenAIro(tk.Tk):
                 generated_points = self.generateSampleDataset(silent=False)
                 if generated_points is None or len(generated_points) == 0:
                     raise ValueError("No generated points available. Please check input values.")
+                
+                
+                print("Here are the generated point coordinates: ", generated_points[0]) #### JUST FOR DEBUG
 
                 # --- Step 2: Prepare Metadata ---
                 center_lat = self.airport.runway_center["latitude"]
@@ -508,29 +514,36 @@ class ScenAIro(tk.Tk):
                 # --- Step 5: Initialize SimConnect for Data Collection ---
                 sim = SimConnect()
                 coord_setter = AircraftPositioningAgent(sim)
+                
+                # Get aircraft orientation for this point
+                pitch = float(self.aircraftOrientation["pitch"][i])
+                roll = float(self.aircraftOrientation["roll"][i])
+                yaw_offset = float(self.aircraftOrientation["yaw"][i])
+
+                # Configure camera/screenshot settings
+                # All these values are now configurable via settings
+                vertical_fov_radians = self.settings.get("camera", "vertical_fov_radians")
+                vertical_fov_degrees = np.degrees(vertical_fov_radians)
+                screen_width = self.settings.get("screen", "width")
+                screen_height = self.settings.get("screen", "height")
+                aspectRatio = screen_width / screen_height
+                runwayHeading = self.airport.runway_heading
+                
+                # Calculate horizontal FOV from vertical FOV and aspect ratio
+                horizontal_fov_degrees = self.__calculateHorizontalFOV(vertical_fov_degrees, aspectRatio)
 
                 # --- Step 6: Iterate through all generated points ---
-                for i, (geo_point, generated_point) in enumerate(zip(geo_points[1:], generated_points)):
+                for i, (geo_point, generated_point) in enumerate(zip(geo_points[0:], generated_points)): #in enumerate(zip(geo_points[1:], generated_points)):  
+                    
+                    # break every 20 images to clear RAM
+                    if i > 0 and i % 20 == 0:
+                        print(f"[INFO] Batch {i} reached. 5 second for the MSFS to clear VRAM...")
+                        time.sleep(5.0)
+                        gc.collect()
+                                        
                     # Extract geographic coordinates and convert altitude to feet
                     latitude, longitude, altitude = map(float, geo_point)
                     altitude *= 3.28084  # Convert meters to feet
-
-                    # Get aircraft orientation for this point
-                    pitch = float(self.aircraftOrientation["pitch"][i])
-                    roll = float(self.aircraftOrientation["roll"][i])
-                    yaw_offset = float(self.aircraftOrientation["yaw"][i])
-
-                    # Configure camera/screenshot settings
-                    # All these values are now configurable via settings
-                    vertical_fov_radians = self.settings.get("camera", "vertical_fov_radians")
-                    vertical_fov_degrees = np.degrees(vertical_fov_radians)
-                    screen_width = self.settings.get("screen", "width")
-                    screen_height = self.settings.get("screen", "height")
-                    aspectRatio = screen_width / screen_height
-                    runwayHeading = self.airport.runway_heading
-                    
-                    # Calculate horizontal FOV from vertical FOV and aspect ratio
-                    horizontal_fov_degrees = self.__calculateHorizontalFOV(vertical_fov_degrees, aspectRatio)
                     
                     # Calculate final heading (runway direction - camera offset)
                     final_heading = (runwayHeading - 180) + yaw_offset     
@@ -538,7 +551,7 @@ class ScenAIro(tk.Tk):
                     # --- Step 7: Position Aircraft and Capture Screenshot ---
                     screenshot_name = coord_setter.positionAircraftInSimAndTakeScreenshot(
                         latitude, longitude, altitude, pitch, final_heading, roll, 
-                        screenshot_path, screen_width, screen_height, setSimHour, setSimMin, excludeImg,
+                        screenshot_path, screen_width, screen_height, setSimHour, setSimMin, excludeImg, custom_filename=None,          ### TODO To be tested
                     )
                     
                     # --- Step 8: Calculate Runway Corner Annotations ---

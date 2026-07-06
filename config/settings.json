@@ -1,0 +1,36 @@
+{
+    "window": {
+        "width": 1400,
+        "height": 820,
+        "bg_color": "#f0f4f8"
+    },
+    "paths": {
+        "screenshot_path": "C:/Users/mfs2024/Desktop/Kevin/generate json files/taxi_szenarien",
+        "config_path": "config"
+    },
+    "screen": {
+        "width": 2560,
+        "height": 1440
+    },
+    "camera": {
+        "vertical_fov_radians": 0.8
+    },
+    "ui_layout": {
+        "left_sidebar_width": 370,
+        "right_sidebar_width": 250,
+        "plot_figsize": [
+            6,
+            4
+        ],
+        "dist_figsize": [
+            4,
+            2
+        ]
+    },
+    "plot": {
+        "point_size": 1,
+        "point_alpha": 0.5,
+        "runway_alpha": 0.5,
+        "apex_point_size": 50
+    }
+}

@@ -111,8 +111,8 @@ class RunwayTaggingEngine:
             [0, 0, 1]
         ])
 
-        # Combined rotation - REVERSED order for inverse: roll @ pitch @ yaw
-        R = mat_roll @ mat_pitch @ mat_yaw
+        # Combined rotation - yaw @ pitch @ roll for proper inverse transformation
+        R = mat_yaw @ mat_pitch @ mat_roll
         
         result = R @ vector
         print(f"[DEBUG] rotate3DPoint: input={vector}, angles=({pitch},{yaw},{roll}), output={result}")

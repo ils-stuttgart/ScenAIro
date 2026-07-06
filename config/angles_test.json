@@ -1,8 +1,11 @@
 {
-    "Pitch Min": "-10",
-    "Pitch Max": "10",
-    "Yaw Min": "-10",
-    "Yaw Max": "10",
-    "Bank Min": "-10",
-    "Bank Max": "10"
+    "Apex X": "1372.5",
+    "Apex Y": "0",
+    "Apex Z": "0",
+    "Lateral Angle Left": "0",
+    "Lateral Angle Right": "0",
+    "Vertical Min Angle": "0",
+    "Vertical Max Angle": "0",
+    "Maximum Distance": "0",
+    "Number of Points": "2"
 }
