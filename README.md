@@ -550,23 +550,6 @@ A compact CNN (two conv + max-pool blocks, flatten, dense) is trained on the Sce
 </p>
 
 
-## Validation Results
-
-Two models with identical architecture were compared: **M_ScenAIro** (trained only on ScenAIro imagery) and **M_LARD** (trained on a LARD subset). Both reached 100% train/validation accuracy. The decisive comparison is on **real** LARD images within the ODD:
-
-| Model | Train acc. [%] | Val acc. [%] | Generalization (outside ODD) [%] | Real images (within ODD) [%] |
-|-------|:---:|:---:|:---:|:---:|
-| **M_ScenAIro** | 100 | 100 | 49 | **62** |
-| M_LARD | 100 | 100 | 48 | 14 |
-
-**A model trained exclusively on ScenAIro data generalized to real images ~4× better** than the LARD-trained baseline (62% vs 14%), attributed to ScenAIro's diverse, realistic operational conditions and edge cases versus LARD's clear-daylight-only scope. This held even though inputs were downscaled to match LARD's 600×600 resolution. Additional findings:
-
-- **Annotation accuracy** — average positional offset **< 1.5 m (~3% of a 45 m runway width)**, from systematic manual inspection of overlaid corners.
-- **Throughput** — **~2.1 s/image** on average in unattended batch mode; the bottleneck is MSFS network fetch + rendering, not ScenAIro logic.
-
-> These results are a proof of concept demonstrating the practical value of ODD-driven synthetic data, not a claim of production-grade detection accuracy.
-
-
 ## Bridging the Sim-to-Real Gap
 
 Because MSFS already provides photorealistic visuals, the effort focuses on minimizing **semantic** (rather than image-quality) discrepancies. The framework incorporates — partly implemented, partly on the roadmap — the following strategies:
