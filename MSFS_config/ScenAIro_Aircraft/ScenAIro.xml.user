@@ -1,5 +1,7 @@
 <UserSettings>
-	<CheckedOutPackages/>
+	<CheckedOutPackages>
+		<Package Name="s-s"/>
+	</CheckedOutPackages>
 	<SelectedPackages/>
 	<Filter/>
 	<ShowOnlyEdited>false</ShowOnlyEdited>

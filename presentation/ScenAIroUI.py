@@ -370,6 +370,13 @@ class ScenAIroUI(tk.Frame):
 
         ttk.Button(row, text="Browse", command=browse_folder).pack(side="left", padx=4)
 
+        # "Annotations only" skips MSFS entirely and just (re)computes the COCO
+        # annotations from each JSON's metadata - no screenshots are taken.
+        self.metadata_annotations_only = tk.BooleanVar(value=False)
+        tk.Checkbutton(section_frame, text="Annotations only (no images)",
+                       variable=self.metadata_annotations_only, bg=bg_color
+                       ).pack(anchor="w", padx=2)
+
         button_row = tk.Frame(section_frame, bg=bg_color)
         button_row.pack(fill="x", pady=4)
 
@@ -728,16 +735,34 @@ class ScenAIroUI(tk.Frame):
         if times: self.__populateEntryFields(self.time_entries, times)
         
     def generateImagesFromFolder(self, folder_path):
-        """Triggers batch generation from a folder of JSON files."""
+        """Triggers batch generation from a folder of JSON files.
+
+        If the "Annotations only" option is enabled, MSFS is skipped entirely and only
+        the COCO annotation JSONs are (re)computed - no screenshots are taken.
+        """
         if not folder_path:
             folder_path = filedialog.askdirectory(title="Select folder with JSON files")
             if not folder_path: return
+
+        annotations_only = self.metadata_annotations_only.get()
         try:
-            self.status_var.set("Batch processing images...")
+            if annotations_only:
+                self.status_var.set("Calculating annotations only (no images)...")
+            else:
+                self.status_var.set("Batch processing images...")
+
             reader = MetadataFileReader(file_path="", screenshot_dir=folder_path)
-            out_paths = reader.process_folder(folder_path, use_sim=True)
-            self.status_var.set(f"Batch complete. {len(out_paths)} images.")
-            messagebox.showinfo("Success", f"{len(out_paths)} images generated.")
+            # use_sim=False -> no MSFS, only annotations are calculated and saved.
+            out_images, out_jsons = reader.process_folder(
+                folder_path, use_sim=not annotations_only, set_weather=not annotations_only
+            )
+
+            if annotations_only:
+                self.status_var.set(f"Done. {len(out_jsons)} annotation files written.")
+                messagebox.showinfo("Success", f"{len(out_jsons)} annotation files written (no images).")
+            else:
+                self.status_var.set(f"Batch complete. {len(out_images)} images.")
+                messagebox.showinfo("Success", f"{len(out_images)} images generated.")
         except Exception as e:
             messagebox.showerror("Error", f"Failed: {e}")
 

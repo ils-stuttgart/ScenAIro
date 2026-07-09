@@ -3,6 +3,7 @@
 <p align="left">
   <img alt="Python" src="https://img.shields.io/badge/python-3.8%2B-blue.svg">
   <img alt="Platform" src="https://img.shields.io/badge/platform-Windows-lightgrey.svg">
+  <img alt="Simulator" src="https://img.shields.io/badge/MSFS-2020-informational.svg">
   <img alt="Simulator" src="https://img.shields.io/badge/MSFS-2024-informational.svg">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-green.svg">
   <a href="https://doi.org/10.18419/DARUS-5124"><img alt="Dataset DOI" src="https://img.shields.io/badge/dataset-10.18419%2FDARUS--5124-orange.svg"></a>
@@ -10,7 +11,7 @@
 
 **ScenAIro** is an end-to-end toolchain for generating high-fidelity, **automatically and deterministically labeled** synthetic datasets from a formally defined **Operational Design Domain (ODD)**. It transforms ODD parameters into geo-referenced landing scenarios, drives Microsoft Flight Simulator (MSFS) via SimConnect to render high-resolution imagery, and produces COCO-compatible annotations by geometric projection of real-world runway geometry — eliminating manual or vision-heuristic labeling while preserving full traceability from requirement to image-level metadata.
 
-The framework is developed at the **Institute of Aircraft Systems (ILS), University of Stuttgart**, and is the reference implementation for the DASC 2025 paper *"From ODD to Data: An End-to-End Toolchain for Synthetic Data Generation — A Case Study on AI-Based Runway Detection."* In that study, a CNN trained **exclusively** on ScenAIro imagery reached **62% accuracy on real LARD images — a 4× improvement** over the same architecture trained on LARD's own synthetic data (14%). See [Validation Results](#validation-results) and [Citation](#citation).
+The framework is developed at the **Institute of Aircraft Systems (ILS), University of Stuttgart**, and is the reference implementation for the DASC 2025 paper *"From ODD to Data: An End-to-End Toolchain for Synthetic Data Generation — A Case Study on AI-Based Runway Detection."* In that study, a CNN trained **exclusively** on ScenAIro imagery generalized to real-world landing images, demonstrating the practical value of ODD-driven synthetic data for training runway-detection models. See [Validation Results](#validation-results) and [Citation](#citation).
 
 The toolchain controls three orthogonal dimensions of dataset generation:
 
@@ -33,6 +34,7 @@ The toolchain controls three orthogonal dimensions of dataset generation:
 - [Project Structure](#project-structure)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
+- [Microsoft Flight Simulator Setup](#microsoft-flight-simulator-setup)
 - [Configuration Files Guide](#configuration-files-guide)
 - [Coordinate System & Geometry](#coordinate-system--geometry)
 - [Sampling Distributions](#sampling-distributions)
@@ -269,13 +271,56 @@ cd ScenAIro
 pip install numpy pyproj opencv-python Pillow mss matplotlib pygetwindow pyautogui
 ```
 
-**Install the ScenAIro aircraft in MSFS** (required for correct labeling — the annotation geometry assumes this camera/aircraft):
+Next, install the custom **ScenAIro aircraft** in MSFS and set the correct camera view — this is required for correct labeling, since the annotation geometry assumes this aircraft and camera. Follow the full walkthrough in [Microsoft Flight Simulator Setup](#microsoft-flight-simulator-setup).
 
-1. Enable **Developer Mode** (Settings → Advanced).
-2. **File → Add Project** → select `MSFS_config/ScenAIro_Aircraft`.
-3. Select the **ScenAIro** aircraft and start a flight.
+Finally, set the output directory and capture resolution via the in-app [settings dialog](#application-settings) or `config/settings.json`.
 
-Then set the output directory and capture resolution via the in-app [settings dialog](#application-settings) or `config/settings.json`.
+
+## Microsoft Flight Simulator Setup
+
+This one-time configuration installs the custom **ScenAIro aircraft** and sets the correct camera view, which together guarantee that the automated annotation pipeline produces geometrically correct runway labels.
+
+> **Why this matters:** ScenAIro's labeling projects real-world runway geometry through the aircraft's camera model. The math assumes the ScenAIro aircraft and the specific camera view configured below — using a different aircraft or camera will shift the projected corners and corrupt the labels.
+
+### 1. Enable Developer Mode
+
+1. Start **Microsoft Flight Simulator**.
+2. Open **Settings**.
+3. Go to **General → Advanced (Developer Mode)** and **activate Developer Mode**.
+4. Click **Apply & Save**, then **Back** to return to the main menu.
+
+A **Developer menu bar** now appears at the top of the screen.
+
+### 2. Load the ScenAIro Aircraft Project
+
+1. In the Developer menu bar, open **File → Open project**.
+2. Navigate to the ScenAIro repository and select the aircraft **`.xml`** file from `MSFS_config/ScenAIro_Aircraft/`.
+3. Once it has loaded, close the project pop-up window.
+
+> **Tip:** After the first load, reopen it faster next time via **File → Open recent**.
+
+### 3. Exit Developer Mode
+
+In the Developer menu bar, go to **DevMode → Exit DevMode**. The developer menu bar disappears and you return to the standard MSFS interface; the ScenAIro aircraft remains available.
+
+### 4. Start a Free Flight with the ScenAIro Aircraft
+
+1. Open **Free Flight**.
+2. Click the **aircraft selection** and scroll until you find the **ScenAIro** aircraft, then select it.
+3. Select the **airport** of your choice.
+4. Start the flight and click **Ready to Fly**.
+
+Once loaded, the aircraft appears as a distinctive **paper-plane–style model** — this confirms the ScenAIro aircraft is active.
+
+### 5. Set the Correct Camera View
+
+This final step is essential for correct annotation.
+
+1. When the flight has started, move the mouse to the **top-center of the screen** to reveal the hover menu.
+2. Click the **camera** icon.
+3. Select **Cockpit → Pilot**, then in the submenu that opens, select **Pilot** again.
+
+With this camera view active, the aircraft is fully configured. Keep this flight running and the MSFS window visible while ScenAIro generates data — the toolchain repositions this aircraft and captures screenshots through the camera view you just configured.
 
 
 ## Configuration Files Guide
@@ -548,6 +593,18 @@ A compact CNN (two conv + max-pool blocks, flatten, dense) is trained on the Sce
     <strong>CNN architecture for the runway detection application</strong><br>
     <img src="docs/Unbenannt.png" alt="CNN architecture" width="300"/>
 </p>
+
+
+## Validation Results
+
+To assess real-world transferability, a compact CNN was trained **exclusively on ScenAIro-generated imagery** and then evaluated on real-world landing images within the ODD. The model reached **100% accuracy on the synthetic training and validation sets** and **62% accuracy on the real images**, indicating that a network trained purely on ScenAIro data transfers to real-world scenarios — even though the inputs were downscaled for evaluation. This supports the effectiveness of ODD-driven synthetic data for producing diverse, realistic operational conditions and edge cases.
+
+Additional findings:
+
+- **Annotation accuracy** — average positional offset **< 1.5 m (~3% of a 45 m runway width)**, from systematic manual inspection of overlaid corners.
+- **Throughput** — **~2.1 s/image** on average in unattended batch mode; the bottleneck is MSFS network fetch + rendering, not ScenAIro logic.
+
+> These results are a proof of concept demonstrating the practical value of ODD-driven synthetic data, not a claim of production-grade detection accuracy. Full experimental details are available in the paper (see [Citation](#citation)).
 
 
 ## Bridging the Sim-to-Real Gap

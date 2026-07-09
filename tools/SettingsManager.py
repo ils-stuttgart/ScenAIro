@@ -79,9 +79,13 @@ class SettingsManager:
         # ----------------------------------------------------------------
         # Camera Settings
         # ----------------------------------------------------------------
-        # Field of view and camera parameters
+        # Field of view and render-camera geometry.
+        # The capture camera is a rigid offset from the aircraft reference point
+        # (see RunwayTaggingEngine.projectPointENU); values come from the MSFS camera debug.
         "camera": {
-            "vertical_fov_radians": 0.8  # Vertical FOV in radians (~45.8 degrees)
+            "vertical_fov_radians": 0.84,               # Vertical FOV in radians (~48 degrees)
+            "camera_offset_body_m": [-0.396, 1.021, -4.990],  # camera vs aircraft: [right, up, forward] m
+            "camera_mount_pitch_deg": -2.25             # camera boresight pitch vs airframe (deg)
         },
         
         # ----------------------------------------------------------------

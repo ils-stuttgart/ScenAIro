@@ -7,6 +7,7 @@ Microsoft Flight Simulator (MSFS).
 """
 
 import os
+import re
 import json
 import cv2
 import numpy as np
@@ -196,12 +197,14 @@ class MetadataFileReader:
         Extract aircraft orientation angles from metadata.
         
         Returns:
-            tuple: (pitch, yaw, roll) as integers in degrees
+            tuple: (pitch, yaw, roll) as floats in degrees
         """
         aircraft_orientation = self.metadata.get("aircraft_orientation", {})
-        pitch = int(aircraft_orientation.get("pitch"))
-        yaw = int(aircraft_orientation.get("yaw"))
-        roll = int(aircraft_orientation.get("roll"))
+        # Keep full precision: int() truncation collapsed sub-degree orientation to 0,
+        # which silently disabled the rotation (rotate3DPoint short-circuits at 0,0,0).
+        pitch = float(aircraft_orientation.get("pitch"))
+        yaw = float(aircraft_orientation.get("yaw"))
+        roll = float(aircraft_orientation.get("roll"))
         return pitch, yaw, roll
 
     def _get_runway_heading(self):
@@ -457,8 +460,9 @@ class MetadataFileReader:
             runway_heading = self._get_runway_heading()
             lat, lon, alt = self._get_aircraft_position()
             pitch, yaw, roll = self._get_aircraft_orientation()
-            pitch = 0.0
-            roll = 0.0
+            # Honor the real orientation so the annotation math (rotate3DPoint) can be
+            # validated without the simulator. Previously pitch/roll were forced to 0,
+            # which made the no-sim path silently skip those rotations.
             heading = runway_heading - 180.0 + yaw
         
         # Load FOV info
@@ -485,61 +489,69 @@ class MetadataFileReader:
         )
         corners = airport.calculateRunwayCorners()
         
-        # Calculate local coordinates
-        
-        generated_point = self._transform_aircraft_LLA_2_cartesian()                                # It's already aligned, not as the original generated point which is not yet tilted by the runway heading
+        # Calculate local coordinates (aircraft position in the local north/east frame
+        # around the runway centre; local_z is height above the runway centre altitude).
+        generated_point = self._transform_aircraft_LLA_2_cartesian()
         local_x, local_y, local_z = generated_point[0], generated_point[1], generated_point[2]
-        
-        # Calculate runway corner annotation structure
-        runway_annotation = RunwayCornerAnnotationStruct()                         
-        structured_objects = runway_annotation.calculateAirplane2RunwayCornerStructure(
-            point=generated_point,
-            runway_corners=corners,
-            angles=(pitch, yaw, roll),
-            runwayHeading=runway_heading,
-            centerHeight=float(runway_data["runway_center"]["altitude"])
-        )
-        
-        # Get the first structured object (list contains one item)
-        so = structured_objects[0]
-        
-        # Corner tuples from StructuredObject (A, B, C, D are tuples of 3 floats each)
-        corner_A, corner_B, corner_C, corner_D = so.A, so.B, so.C, so.D
-        
-        # Calculate pixel projections for each corner (clockwise: A->B->C->D)       # should same as otherwise
-        pixel_coords = []
-        for point in [corner_A, corner_B, corner_C, corner_D]:
-            rotated_point = self.tagging.rotate3DPoint(point, pitch, yaw, roll)
-            x_pixel, y_pixel = self.tagging.calculatePixelCoordinates(
-                rotated_point, horizontal_fov, vertical_fov, width, height
-            )
-            pixel_coords.extend([int(x_pixel), int(y_pixel)])
-        
-        # Calculate bounding box from corner points
-        pixel_x = pixel_coords[0::2]
-        pixel_y = pixel_coords[1::2]
-        bbox_x = min(pixel_x)
-        bbox_y = min(pixel_y)
-        bbox_w = max(pixel_x) - bbox_x
-        bbox_h = max(pixel_y) - bbox_y
-        
-        bbox = [bbox_x, bbox_y, bbox_w, bbox_h]
-        area = bbox_w * bbox_h
-        
+
+        # Project the four runway corners with the geometrically correct pinhole camera.
+        # The simulator renders the aircraft/camera facing (runway_heading - 180 + yaw);
+        # the annotation MUST use that same direction or the runway ends up "behind" the
+        # camera (negative depth) and the projection is mirrored through the image centre.
+        center_alt = float(runway_data["runway_center"]["altitude"])
+        aircraft_alt = center_alt + local_z
+        camera_heading = runway_heading - 180.0 + yaw
+
+        # Corner order A, B, C, D = top_left, top_right, bottom_right, bottom_left.
+        # Build the corners in camera space, then clip the runway polygon to the visible
+        # image (near-plane + image-rectangle). This keeps off-frame / behind-camera corners
+        # out of the label instead of letting a negative depth mirror them to the centre.
+        corners_cam = []
+        for corner_key in ["top_left", "top_right", "bottom_right", "bottom_left"]:
+            corner_north, corner_east, corner_alt = corners[corner_key]
+            corners_cam.append(self.tagging._cameraSpaceENU(
+                north=corner_north - local_x,
+                east=corner_east - local_y,
+                up=corner_alt - aircraft_alt,
+                camera_heading_deg=camera_heading,
+                pitch_deg=pitch,
+                roll_deg=roll,
+            ))
+        polygon = self.tagging.visibleRunwayPolygon(
+            corners_cam, horizontal_fov, vertical_fov, width, height)
+
         # 5: Build merged annotation JSON with original data + COCO-style annotations
         merged_data = copy.deepcopy(self.metadata)
-        
-        # COCO-format annotation entry
-        coco_annotation = {
-            "id": 0,
-            "image_id": f"{json_basename}.png",
-            "category_id": 1,
-            "bbox": bbox,
-            "segmentation": [pixel_coords],
-            "area": area,
-            "iscrowd": 0,
-        }
-        
+
+        if not polygon:
+            # Runway entirely off-frame / behind the camera -> empty annotation.
+            print(f"[skip] runway not in frame: {json_basename}.png")
+            coco_annotation = None
+        else:
+            pixel_coords = [int(round(c)) for xy in polygon for c in xy]
+
+            # Calculate bounding box from the clipped (in-image) polygon
+            pixel_x = pixel_coords[0::2]
+            pixel_y = pixel_coords[1::2]
+            bbox_x = min(pixel_x)
+            bbox_y = min(pixel_y)
+            bbox_w = max(pixel_x) - bbox_x
+            bbox_h = max(pixel_y) - bbox_y
+
+            bbox = [bbox_x, bbox_y, bbox_w, bbox_h]
+            area = bbox_w * bbox_h
+
+            # COCO-format annotation entry
+            coco_annotation = {
+                "id": 0,
+                "image_id": f"{json_basename}.png",
+                "category_id": 1,
+                "bbox": bbox,
+                "segmentation": [pixel_coords],
+                "area": area,
+                "iscrowd": 0,
+            }
+
         # Ensure images array uses correct format
         merged_data["images"] = [
             {
@@ -550,8 +562,8 @@ class MetadataFileReader:
             }
         ]
         
-        # Set annotations array
-        merged_data["annotations"] = [coco_annotation]
+        # Set annotations array (empty when the runway is not in frame)
+        merged_data["annotations"] = [coco_annotation] if coco_annotation is not None else []
         
         # Ensure categories exist
         if "categories" not in merged_data:
@@ -590,6 +602,20 @@ class MetadataFileReader:
   
         
 
+    @staticmethod
+    def _natural_sort_key(path):
+        """
+        Natural ("human") sort key so embedded numbers order by value, not by character.
+
+        Without this, ``os.listdir`` order is lexicographic (1, 10, 11, 110, 2, ...).
+        Splitting the filename into digit / non-digit chunks and comparing digit runs as
+        integers gives numeric order (1, 2, ... 10, 11, ... 110). Handles padded names and
+        mixed names like ``AutoScenario_2.json`` vs ``AutoScenario_10.json``.
+        """
+        name = os.path.basename(path)
+        return [int(chunk) if chunk.isdigit() else chunk.lower()
+                for chunk in re.split(r"(\d+)", name)]
+
     def process_folder(self, folder_path, use_sim=True, set_weather=True):
         """
         Process all JSON files in a folder and generate images for each.
@@ -612,11 +638,14 @@ class MetadataFileReader:
         if not os.path.isdir(folder_path):
             raise NotADirectoryError(f"Folder not found: {folder_path}")
 
-        json_files = [
-            os.path.join(folder_path, f)
-            for f in os.listdir(folder_path)
-            if f.lower().endswith(".json")
-        ]
+        # Sort in natural (numeric) order so 2.json comes before 10.json comes before
+        # 110.json - not lexicographic (1, 10, 11, 110, 2, ...).
+        json_files = sorted(
+            (os.path.join(folder_path, f)
+             for f in os.listdir(folder_path)
+             if f.lower().endswith(".json")),
+            key=self._natural_sort_key,
+        )
 
         if not json_files:
             raise FileNotFoundError("No JSON files found in folder.")
@@ -646,10 +675,13 @@ class MetadataFileReader:
                 reader = MetadataFileReader(json_file, screenshot_dir=folder_path)
                 reader.load_metadata()
 
-                # Check for weather/airport changes and apply wait times
-                current_airport, current_weather, weather_set = reader.check_and_wait_for_conditions(
-                    current_airport, current_weather, set_weather=set_weather
-                )
+                # Weather changes and wait times only matter when rendering in MSFS.
+                # In annotation-only mode (use_sim=False) skip them entirely so the
+                # batch is fast and never drives the simulator/weather automation.
+                if use_sim:
+                    current_airport, current_weather, weather_set = reader.check_and_wait_for_conditions(
+                        current_airport, current_weather, set_weather=set_weather
+                    )
 
                 # Use generate_and_save_annotation for full pipeline
                 out_path, json_path, weather_set = reader.generate_and_save_annotation(

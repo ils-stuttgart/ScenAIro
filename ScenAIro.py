@@ -514,11 +514,6 @@ class ScenAIro(tk.Tk):
                 # --- Step 5: Initialize SimConnect for Data Collection ---
                 sim = SimConnect()
                 coord_setter = AircraftPositioningAgent(sim)
-                
-                # Get aircraft orientation for this point
-                pitch = float(self.aircraftOrientation["pitch"][i])
-                roll = float(self.aircraftOrientation["roll"][i])
-                yaw_offset = float(self.aircraftOrientation["yaw"][i])
 
                 # Configure camera/screenshot settings
                 # All these values are now configurable via settings
@@ -544,9 +539,14 @@ class ScenAIro(tk.Tk):
                     # Extract geographic coordinates and convert altitude to feet
                     latitude, longitude, altitude = map(float, geo_point)
                     altitude *= 3.28084  # Convert meters to feet
-                    
+
+                    # Get this point's aircraft orientation (per-point arrays)
+                    pitch = float(self.aircraftOrientation["pitch"][i])
+                    roll = float(self.aircraftOrientation["roll"][i])
+                    yaw_offset = float(self.aircraftOrientation["yaw"][i])
+
                     # Calculate final heading (runway direction - camera offset)
-                    final_heading = (runwayHeading - 180) + yaw_offset     
+                    final_heading = (runwayHeading - 180) + yaw_offset
 
                     # --- Step 7: Position Aircraft and Capture Screenshot ---
                     screenshot_name = coord_setter.positionAircraftInSimAndTakeScreenshot(
