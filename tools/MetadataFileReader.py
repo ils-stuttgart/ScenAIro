@@ -358,11 +358,12 @@ class MetadataFileReader:
         excludeImg=False,
         current_active_weather=None,
         sim_connection=None,
-        coord_setter=None
+        coord_setter=None,
+        create_overlay=False
     ):
         """
         Generate annotation from metadata, take screenshot, and save merged JSON.
-        
+
         This method:
         1. Loads the existing JSON metadata
         2. Extracts all relevant info
@@ -370,7 +371,8 @@ class MetadataFileReader:
         4. Calculates runway corner annotations (COCO format with bbox & segmentation)
         5. Saves a new JSON file (in a new folder) containing the original data
            plus the generated annotation data
-        
+        6. Optionally writes a verification overlay copy of the image (tagged_<name>.png)
+
         Args:
             use_sim: Whether to use MSFS for screenshot generation
             set_weather: Whether to set weather based on metadata
@@ -378,7 +380,10 @@ class MetadataFileReader:
                 If None, creates a 'annotations' subfolder in the same directory
                 as the source JSON file.
             excludeImg: If True, skip image creation (only generate annotations)
-            
+            create_overlay: If True, also write a copy of the image with the annotation
+                drawn on it (tagged_<name>.png), for visual verification. The clean image
+                (used for training) is left untouched.
+
         Returns:
             tuple: (base_image_path, output_json_path, weather_set)
         """
@@ -596,8 +601,37 @@ class MetadataFileReader:
             json.dump(merged_data, f, indent=4, ensure_ascii=False)
         
         print(f"[MetadataFileReader] Annotated JSON saved: {output_json_path}")
+
+        # 6: Optional verification overlay. Draw the annotation onto a COPY of the image
+        # (tagged_<name>.png) so the clean training image stays untouched. Reuses the shared
+        # RunwayTaggingEngine helper, so the drawn polygon matches the saved segmentation.
+        # Works with a freshly rendered screenshot and with an existing image already in the
+        # folder (annotations-only mode); skipped silently if no image is present.
+        if create_overlay and not excludeImg:
+            if os.path.exists(base_image_path):
+                try:
+                    overlay_path = os.path.join(
+                        os.path.dirname(base_image_path), f"tagged_{json_basename}.png")
+                    self.tagging.drawOverlayCopy(
+                        image_path=base_image_path,
+                        output_path=overlay_path,
+                        airport_data=runway_data,
+                        generated_point=generated_point,
+                        pitch=pitch,
+                        yaw=yaw,
+                        roll=roll,
+                        horizontal_fov_degrees=horizontal_fov,
+                        vertical_fov_degrees=vertical_fov,
+                        screen_width=width,
+                        screen_height=height,
+                    )
+                except Exception as overlay_err:
+                    print(f"[MetadataFileReader] Overlay drawing failed for {json_basename}: {overlay_err}")
+            else:
+                print(f"[MetadataFileReader] Overlay requested but image not found: {base_image_path}")
+
         print(f"[MetadataFileReader] Process finished for {json_basename}")
-        
+
         return base_image_path, output_json_path, weather_set
   
         
@@ -616,18 +650,20 @@ class MetadataFileReader:
         return [int(chunk) if chunk.isdigit() else chunk.lower()
                 for chunk in re.split(r"(\d+)", name)]
 
-    def process_folder(self, folder_path, use_sim=True, set_weather=True):
+    def process_folder(self, folder_path, use_sim=True, set_weather=True, create_overlay=False):
         """
         Process all JSON files in a folder and generate images for each.
-        
+
         This method efficiently handles weather settings by only changing
         the weather when it differs from the previously set weather.
-        
+
         Args:
             folder_path: Path to the folder containing JSON files
             use_sim: Whether to use MSFS and AircraftPositioningAgent
             set_weather: Whether to set weather based on JSON metadata
-            
+            create_overlay: If True, also write a tagged_<name>.png verification copy of
+                each image with the annotation drawn on it (clean image left untouched).
+
         Returns:
             list: Paths to the generated images
             
@@ -691,7 +727,8 @@ class MetadataFileReader:
                     excludeImg=False,
                     current_active_weather=current_weather,
                     sim_connection=main_sim_connection,
-                    coord_setter=main_coord_setter 
+                    coord_setter=main_coord_setter,
+                    create_overlay=create_overlay
                 )
                 
                 # Update current weather tracking if weather was set

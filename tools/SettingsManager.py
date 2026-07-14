@@ -85,7 +85,8 @@ class SettingsManager:
         "camera": {
             "vertical_fov_radians": 0.84,               # Vertical FOV in radians (~48 degrees)
             "camera_offset_body_m": [-0.396, 1.021, -4.990],  # camera vs aircraft: [right, up, forward] m
-            "camera_mount_pitch_deg": -2.25             # camera boresight pitch vs airframe (deg)
+            "camera_mount_pitch_deg": -2.25,            # camera boresight pitch vs airframe (deg)
+            "principal_point_px": None                  # [cx, cy] optical axis in px; None -> image centre
         },
         
         # ----------------------------------------------------------------

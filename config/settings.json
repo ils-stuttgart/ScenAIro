@@ -5,7 +5,7 @@
         "bg_color": "#f0f4f8"
     },
     "paths": {
-        "screenshot_path": "C:/Users/mfs2024/Desktop/Saymon/Images_forTesting/New folder",
+        "screenshot_path": "C:/Users/mfs2024/Desktop/Saymon/Images_forTesting/New folder (3)",
         "config_path": "config"
     },
     "screen": {
@@ -14,8 +14,13 @@
     },
     "camera": {
         "vertical_fov_radians": 0.84,
-        "camera_offset_body_m": [-0.396, 1.021, -4.990],
-        "camera_mount_pitch_deg": -2.25
+        "camera_offset_body_m": [
+            -0.396,
+            1.021,
+            -4.99
+        ],
+        "camera_mount_pitch_deg": -2.25,
+        "principal_point_px": null
     },
     "ui_layout": {
         "left_sidebar_width": 370,

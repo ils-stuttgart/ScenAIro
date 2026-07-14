@@ -377,6 +377,14 @@ class ScenAIroUI(tk.Frame):
                        variable=self.metadata_annotations_only, bg=bg_color
                        ).pack(anchor="w", padx=2)
 
+        # "Visual Overlay" also writes a tagged_<name>.png copy of each image with the
+        # annotation drawn on it (clean training image left untouched). Works on freshly
+        # rendered images and on existing images already in the folder (annotations-only).
+        self.metadata_overlay_var = tk.BooleanVar(value=False)
+        tk.Checkbutton(section_frame, text="Visual Overlay (tagged copy)",
+                       variable=self.metadata_overlay_var, bg=bg_color
+                       ).pack(anchor="w", padx=2)
+
         button_row = tk.Frame(section_frame, bg=bg_color)
         button_row.pack(fill="x", pady=4)
 
@@ -745,6 +753,7 @@ class ScenAIroUI(tk.Frame):
             if not folder_path: return
 
         annotations_only = self.metadata_annotations_only.get()
+        create_overlay = self.metadata_overlay_var.get()
         try:
             if annotations_only:
                 self.status_var.set("Calculating annotations only (no images)...")
@@ -754,7 +763,8 @@ class ScenAIroUI(tk.Frame):
             reader = MetadataFileReader(file_path="", screenshot_dir=folder_path)
             # use_sim=False -> no MSFS, only annotations are calculated and saved.
             out_images, out_jsons = reader.process_folder(
-                folder_path, use_sim=not annotations_only, set_weather=not annotations_only
+                folder_path, use_sim=not annotations_only, set_weather=not annotations_only,
+                create_overlay=create_overlay
             )
 
             if annotations_only:

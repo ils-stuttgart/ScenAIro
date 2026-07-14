@@ -32,6 +32,7 @@ class RunwayTaggingEngine:
     MSFS_PITCH_SIGN = -1.0                       # MSFS PLANE_PITCH_DEGREES positive nose-DOWN
     CAMERA_OFFSET_BODY = (-0.396, 1.021, -4.990)  # camera vs aircraft ref: [right, up, forward] m
     CAMERA_MOUNT_PITCH_DEG = -2.25               # camera boresight pitch vs airframe (deg)
+    PRINCIPAL_POINT_PX = None                    # [cx, cy] optical axis in px; None -> image centre
     NEAR_PLANE_M = 1.0                           # near clip plane (m in front of camera)
 
     def __init__(self):
@@ -39,11 +40,19 @@ class RunwayTaggingEngine:
         # Load the camera geometry from settings (falls back to the constants above).
         self.camera_offset_body = self.CAMERA_OFFSET_BODY
         self.camera_mount_pitch_deg = self.CAMERA_MOUNT_PITCH_DEG
+        # Principal point (optical axis). None -> image centre (W/2, H/2). A calibrated
+        # off-centre value absorbs any residual annotation shift the pose model cannot explain
+        # (see tests/calibrate_intrinsics.py); this is the intrinsics counterpart to the
+        # already-correct extrinsics (offset + mount pitch).
+        self.principal_point_px = self.PRINCIPAL_POINT_PX
         try:
             from tools.SettingsManager import SettingsManager
             settings = SettingsManager()
             self.camera_offset_body = tuple(settings.get("camera", "camera_offset_body_m"))
             self.camera_mount_pitch_deg = float(settings.get("camera", "camera_mount_pitch_deg"))
+            pp = settings.get("camera", "principal_point_px")
+            if pp is not None:
+                self.principal_point_px = (float(pp[0]), float(pp[1]))
         except Exception as exc:
             print(f"[RunwayTaggingEngine] Using default camera geometry ({exc})")
 
@@ -275,16 +284,24 @@ class RunwayTaggingEngine:
         return self._projectCameraSpace(np.array([x_c, y_c, z_c]), horizontal_fov,
                                         vertical_fov, screen_width, screen_height) + (z_c,)
 
-    @staticmethod
-    def _projectCameraSpace(pt_cam, horizontal_fov, vertical_fov, screen_width, screen_height):
-        """Perspective-divide a camera-space point [x_c, y_c, z_c] to a (x_pixel, y_pixel)."""
+    def _projectCameraSpace(self, pt_cam, horizontal_fov, vertical_fov, screen_width, screen_height):
+        """Perspective-divide a camera-space point [x_c, y_c, z_c] to a (x_pixel, y_pixel).
+
+        Focal lengths come from the FOV; the principal point defaults to the image centre but
+        can be overridden by a calibrated ``self.principal_point_px`` = (cx, cy) to absorb an
+        off-centre optical axis (see tests/calibrate_intrinsics.py).
+        """
         f_h = (screen_width / 2) / np.tan(np.radians(horizontal_fov) / 2)
         f_v = (screen_height / 2) / np.tan(np.radians(vertical_fov) / 2)
+        if self.principal_point_px is not None:
+            cx, cy = float(self.principal_point_px[0]), float(self.principal_point_px[1])
+        else:
+            cx, cy = screen_width / 2, screen_height / 2
         x_c, y_c, z_c = float(pt_cam[0]), float(pt_cam[1]), float(pt_cam[2])
         if z_c == 0:
             z_c = 1e-9
-        x_pixel = (screen_width / 2) + f_h * (x_c / z_c)
-        y_pixel = (screen_height / 2) - f_v * (y_c / z_c)
+        x_pixel = cx + f_h * (x_c / z_c)
+        y_pixel = cy - f_v * (y_c / z_c)
         return (x_pixel, y_pixel)
 
     # ---------------------
@@ -407,7 +424,8 @@ class RunwayTaggingEngine:
         return visible
 
     def cornerPixelsFromMetadata(self, airport_data, generated_point, pitch, yaw, roll,
-                                 horizontal_fov, vertical_fov, screen_width, screen_height):
+                                 horizontal_fov, vertical_fov, screen_width, screen_height,
+                                 include_depth=False):
         """
         Project the four runway corners to pixels using the correct pinhole camera.
 
@@ -415,6 +433,11 @@ class RunwayTaggingEngine:
         aircraft position (``generated_point`` = local north/east, z = height above the
         runway centre) with the camera facing ``runway_heading - 180 + yaw`` - the heading
         the simulator actually renders. Returns [(x, y) for A, B, C, D].
+
+        With ``include_depth=True`` returns [(x, y, depth) for A, B, C, D], where ``depth`` is
+        the distance along the boresight: ``depth <= 0`` means the corner is BEHIND the camera
+        and its (x, y) is a mirrored artefact (do not draw it). Callers that only want to mark
+        genuinely visible corners must filter on ``depth > 0`` as well as the image bounds.
         """
         from tools.RunwayGeometryCalculator import RunwayGeometryCalculator
 
@@ -436,10 +459,13 @@ class RunwayTaggingEngine:
         pixels = []
         for key in ["top_left", "top_right", "bottom_right", "bottom_left"]:
             cn, ce, ca = corners[key]
-            x_pixel, y_pixel, _depth = self.projectPointENU(
+            x_pixel, y_pixel, depth = self.projectPointENU(
                 cn - ac_n, ce - ac_e, ca - ac_alt, camera_heading, pitch, roll,
                 horizontal_fov, vertical_fov, screen_width, screen_height)
-            pixels.append((int(round(x_pixel)), int(round(y_pixel))))
+            if include_depth:
+                pixels.append((int(round(x_pixel)), int(round(y_pixel)), float(depth)))
+            else:
+                pixels.append((int(round(x_pixel)), int(round(y_pixel))))
         return pixels
 
     def visiblePolygonFromMetadata(self, airport_data, generated_point, pitch, yaw, roll,
@@ -484,6 +510,74 @@ class RunwayTaggingEngine:
     # ---------------------
     # Visualization for Testing
     # ---------------------
+
+    def drawOverlayCopy(self, image_path, output_path, airport_data, generated_point,
+                        pitch, yaw, roll, horizontal_fov_degrees, vertical_fov_degrees,
+                        screen_width, screen_height):
+        """
+        Draw the runway annotation onto a COPY of an image for visual verification.
+
+        Reads ``image_path``, draws the clipped visible runway polygon (identical to the saved
+        COCO ``segmentation``) plus the four labelled corners A/B/C/D, and writes the result to
+        ``output_path``. The source image is never modified - the clean screenshot is what
+        trains the model; this copy is only for eyeballing the label.
+
+        This is the single source of truth for the verification overlay, shared by the native
+        generation workflow (``doOverlayLabelsOnImage``) and the MetadataFileReader batch
+        workflow, so both stay pixel-identical to the annotation they visualise.
+
+        Args:
+            image_path: Path to the clean input screenshot.
+            output_path: Path for the annotated copy (e.g. ``tagged_<name>.png``).
+            airport_data: Runway metadata dict (name, dimensions, heading, center, heights).
+            generated_point: Aircraft position relative to the runway centre
+                (north, east, height-above-centre), as used by ``visiblePolygonFromMetadata``.
+            pitch, yaw, roll: Aircraft orientation from the metadata, in degrees.
+            horizontal_fov_degrees, vertical_fov_degrees: Field of view in degrees.
+            screen_width, screen_height: Image size in pixels.
+
+        Raises:
+            FileNotFoundError: If the input image cannot be loaded.
+            IOError: If the output image cannot be saved.
+        """
+        image = cv2.imread(image_path)
+        if image is None:
+            raise FileNotFoundError(f"Could not load image: {image_path}")
+
+        # Clipped visible polygon - exactly what the saved COCO segmentation contains, so the
+        # overlay matches the annotation even when the runway runs off-frame.
+        polygon = self.visiblePolygonFromMetadata(
+            airport_data, generated_point, pitch, yaw, roll,
+            horizontal_fov_degrees, vertical_fov_degrees, screen_width, screen_height)
+
+        if polygon:
+            poly_int = [(int(round(x)), int(round(y))) for (x, y) in polygon]
+
+            # Draw the closed visible polygon.
+            cv2.polylines(image, [np.array(poly_int, dtype=np.int32)], isClosed=True,
+                          color=(0, 255, 0), thickness=1)
+
+            # Label the four true runway corners (A,B,C,D) that are genuinely visible, for
+            # reference alongside the clipped polygon. A corner must be BOTH in front of the
+            # camera (depth > 0) AND inside the image: a behind-camera corner projects to a
+            # mirrored pixel that can land mid-frame, so bounds alone are not enough.
+            corner_px = self.cornerPixelsFromMetadata(
+                airport_data, generated_point, pitch, yaw, roll,
+                horizontal_fov_degrees, vertical_fov_degrees, screen_width, screen_height,
+                include_depth=True)
+            for label, (x_pixel, y_pixel, depth) in zip(["A", "B", "C", "D"], corner_px):
+                if depth > 0 and 0 <= x_pixel < image.shape[1] and 0 <= y_pixel < image.shape[0]:
+                    cv2.circle(image, (x_pixel, y_pixel), radius=3,
+                               color=(0, 0, 255), thickness=-1)
+                    cv2.putText(image, label, (x_pixel + 5, y_pixel - 5),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+
+        # Save the annotated copy (written even when the runway is off-frame, so the set of
+        # tagged images mirrors the set of source images).
+        if not cv2.imwrite(output_path, image):
+            raise IOError(f"Failed to save image: {output_path}")
+
+        print(f"Overlay image saved: {output_path}")
 
     def saveAnnotation(self, screenshot_name, structured_objects, image_width,
                        image_height, horizontal_fov_degrees, vertical_fov_degrees, 
@@ -690,42 +784,18 @@ class RunwayTaggingEngine:
             print("[INFO] excludeImg=True - No overlay image created, only JSON saved.")
             return
 
-        # Load the input image
-        image = cv2.imread(image_path)
-        if image is None:
-            raise FileNotFoundError(f"Could not load image: {image_path}")
-        
-        # Draw the runway label for each structured object
-        for obj in structured_objects:
-            # Clipped visible polygon (exactly what the saved COCO segmentation contains),
-            # so the overlay matches the annotation even when the runway runs off-frame.
-            polygon = self.visiblePolygonFromMetadata(
-                airport_data, generated_point, cam_pitch, cam_yaw, cam_roll,
-                horizontal_fov_degrees, vertical_fov_degrees, screen_width, screen_height)
-
-            if not polygon:
-                continue
-
-            poly_int = [(int(round(x)), int(round(y))) for (x, y) in polygon]
-
-            # Draw the closed visible polygon.
-            cv2.polylines(image, [np.array(poly_int, dtype=np.int32)], isClosed=True,
-                          color=(0, 255, 0), thickness=1)
-
-            # Label the four true runway corners (A,B,C,D) that fall inside the frame, for
-            # reference alongside the clipped polygon.
-            corner_px = self.cornerPixelsFromMetadata(
-                airport_data, generated_point, cam_pitch, cam_yaw, cam_roll,
-                horizontal_fov_degrees, vertical_fov_degrees, screen_width, screen_height)
-            for label, (x_pixel, y_pixel) in zip(["A", "B", "C", "D"], corner_px):
-                if 0 <= x_pixel < image.shape[1] and 0 <= y_pixel < image.shape[0]:
-                    cv2.circle(image, (x_pixel, y_pixel), radius=3,
-                              color=(0, 0, 255), thickness=-1)
-                    cv2.putText(image, label, (x_pixel + 5, y_pixel - 5),
-                               cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-
-        # Save the annotated image
-        if not cv2.imwrite(output_path, image):
-            raise IOError(f"Failed to save image: {output_path}")
-
-        print(f"Image saved: {output_path}")
+        # Draw the verification overlay onto a copy of the screenshot. Shared helper, so the
+        # drawn polygon/corners are pixel-identical to the annotation saved above.
+        self.drawOverlayCopy(
+            image_path=image_path,
+            output_path=output_path,
+            airport_data=airport_data,
+            generated_point=generated_point,
+            pitch=cam_pitch,
+            yaw=cam_yaw,
+            roll=cam_roll,
+            horizontal_fov_degrees=horizontal_fov_degrees,
+            vertical_fov_degrees=vertical_fov_degrees,
+            screen_width=screen_width,
+            screen_height=screen_height,
+        )
